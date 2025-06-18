@@ -1,1 +1,1 @@
-# securepipe-llm-gateway
+# huggingface-secure-proxy

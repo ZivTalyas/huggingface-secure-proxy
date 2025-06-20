@@ -6,6 +6,10 @@ project(SecurityEngine VERSION 1.0.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Add subdirectories
+add_subdirectory(mlInterface)
+add_subdirectory(textProcessor)
+
 # Find required packages
 find_package(Python3 REQUIRED COMPONENTS Development)
 find_package(pybind11 REQUIRED CONFIG)
@@ -26,6 +30,8 @@ target_link_libraries(security_cpp PRIVATE
     pybind11::module
     Boost::regex
     Poppler::Poppler
+    text_processor
+    ml_interface
 )
 
 # Include directories
@@ -49,6 +55,8 @@ pybind11_extension(security_cpp
     LINK_LIBRARIES
         Boost::regex
         Poppler::Poppler
+        text_processor
+        ml_interface
 )
 
 # Install rules

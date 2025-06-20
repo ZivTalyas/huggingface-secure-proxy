@@ -1,44 +1,43 @@
-# Stage 1: Build dependencies
-FROM python:3.11-slim as builder
-
-WORKDIR /app
-
-# Install build dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    cmake \
-    libcurl4-openssl-dev \
-    libssl-dev \
-    libicu-dev \
-    libboost-dev \
-    libpoppler-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy source code
-COPY . .
-
-# Stage 2: Production image
+# Development Dockerfile
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install runtime dependencies
+# Install development tools
 RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    vim \
+    curl \
+    wget \
     libicu-dev \
     libpoppler-dev \
+    libboost-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy from builder
-COPY --from=builder /usr/local/lib/python3.11/dist-packages /usr/local/lib/python3.11/dist-packages
-COPY --from=builder /app/app /app/app
-COPY --from=builder /app/requirements.txt .
+# Install Python development dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements-dev.txt
 
-# Expose port
+# Set up volume mounts for development
+VOLUME /app
+VOLUME /app/cpp/build
+
+# Install C++ dependencies
+WORKDIR /app/cpp
+RUN mkdir -p build && \
+    cd build && \
+    cmake .. && \
+    make
+
+# Set up environment variables
+ENV PYTHONPATH=/app:/app/cpp/build
+
+# Expose ports
 EXPOSE 8000
+EXPOSE 8080  # Debug port
 
-# Start command
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start command with hot reload
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

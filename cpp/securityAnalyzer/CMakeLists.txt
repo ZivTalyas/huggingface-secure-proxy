@@ -1,6 +1,6 @@
-add_library(text_processor STATIC
-    TextProcessor.cpp
-    TextProcessor.h
+add_library(security_analyzer STATIC
+    SecurityAnalyzer.cpp
+    SecurityAnalyzer.h
 )
 
 # Find required packages
@@ -8,7 +8,7 @@ find_package(Boost REQUIRED COMPONENTS regex)
 find_package(Poppler REQUIRED)
 
 # Link libraries
-target_link_libraries(text_processor PRIVATE
+target_link_libraries(security_analyzer PRIVATE
     Boost::regex
     Poppler::Poppler
 )

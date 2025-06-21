@@ -1,0 +1,17 @@
+# Ignore Python bytecode files
+__pycache__/
+*.py[cod]
+
+# Ignore C++ build files
+build/
+cmake/
+*.so
+*.pyd
+*.dylib
+*.lib
+*.a
+*.o
+*.obj
+*.exe
+*.dll
+*.bin

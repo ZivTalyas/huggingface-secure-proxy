@@ -3,41 +3,62 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install development tools
-RUN apt-get update && apt-get install -y \
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
     git \
-    vim \
-    curl \
+    make \
+    g++ \
     wget \
-    libicu-dev \
+    unzip \
+    nlohmann-json3-dev \
+    libboost-all-dev \
+    libpoppler-cpp-dev \
     libpoppler-dev \
-    libboost-dev \
-    && rm -rf /var/lib/apt/lists/*
+    poppler-utils \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /usr/local/include/nlohmann \
+    && ln -sf /usr/include/nlohmann/json.hpp /usr/local/include/nlohmann/
 
-# Install Python development dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install ONNX Runtime
+RUN mkdir -p /opt/onnxruntime && \
+    cd /opt/onnxruntime && \
+    wget https://github.com/microsoft/onnxruntime/releases/download/v1.15.1/onnxruntime-linux-x64-1.15.1.tgz && \
+    tar -xzf onnxruntime-linux-x64-1.15.1.tgz --strip-components=1 && \
+    rm onnxruntime-linux-x64-1.15.1.tgz && \
+    echo "/opt/onnxruntime/lib" > /etc/ld.so.conf.d/onnxruntime.conf && \
+    ldconfig
+
+# Set environment variables for ONNX Runtime
+ENV ONNXRUNTIME_ROOT_DIR=/opt/onnxruntime
+ENV ONNXRUNTIME_INCLUDE_DIR=/opt/onnxruntime/include/onnxruntime/core/session
+ENV ONNXRUNTIME_LIBRARY_DIR=/opt/onnxruntime/lib
+
+# Initialize environment variables without referencing potentially undefined variables
+ENV LD_LIBRARY_PATH=/opt/onnxruntime/lib
+ENV PATH=$PATH:/opt/onnxruntime/bin
+ENV CMAKE_PREFIX_PATH=/opt/onnxruntime
+
+# Update ldconfig to include ONNX Runtime libraries
+RUN echo "/opt/onnxruntime/lib" > /etc/ld.so.conf.d/onnxruntime.conf && \
+    ldconfig
+
+# Install Python dependencies
+COPY requirements-dev.txt .
 RUN pip install --no-cache-dir -r requirements-dev.txt
 
-# Set up volume mounts for development
-VOLUME /app
-VOLUME /app/cpp/build
+# Set environment variables
+ENV PYTHONPATH=/app
 
-# Install C++ dependencies
-WORKDIR /app/cpp
-RUN mkdir -p build && \
-    cd build && \
-    cmake .. && \
-    make
+# Set working directory for the application
+WORKDIR /app/app
 
-# Set up environment variables
-ENV PYTHONPATH=/app:/app/cpp/build
+# Copy application code
+COPY app /app/app
 
 # Expose ports
-EXPOSE 8000
-EXPOSE 8080  # Debug port
+EXPOSE 8000 8080
 
-# Start command with hot reload
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Default command (starts a shell)
+CMD ["/bin/bash"]

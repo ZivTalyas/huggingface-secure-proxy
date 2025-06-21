@@ -10,11 +10,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_subdirectory(mlInterface)
 add_subdirectory(textProcessor)
 
+# Add custom module path
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
+
 # Find required packages
 find_package(Python3 REQUIRED COMPONENTS Development)
 find_package(pybind11 REQUIRED CONFIG)
 find_package(Boost REQUIRED COMPONENTS regex)
 find_package(Poppler REQUIRED)
+
+# Set ONNX Runtime paths
+set(ONNXRUNTIME_ROOT "/opt/onnxruntime" CACHE PATH "Path to ONNX Runtime installation")
+set(ONNXRUNTIME_INCLUDE_DIR "${ONNXRUNTIME_ROOT}/include")
+set(ONNXRUNTIME_LIBRARY_DIR "${ONNXRUNTIME_ROOT}/lib")
 
 # Add source files
 set(SOURCES

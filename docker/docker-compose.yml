@@ -15,12 +15,12 @@ services:
       - SECURITY_LEVEL=high
       - PYTHONUNBUFFERED=1
     volumes:
-      - ../app:/app/app
+      - ../app:/app
       - ./docker-compose.yml:/app/docker-compose.yml
     depends_on:
       - backend
       - redis
-    command: uvicorn app.frontend.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn frontend.main:app --host 0.0.0.0 --port 8000 --reload
 
   backend:
     build:
@@ -35,12 +35,12 @@ services:
       - REDIS_PORT=6379
       - PYTHONUNBUFFERED=1
     volumes:
-      - ../app:/app/app
+      - ../app:/app
       - ../cpp:/app/cpp
       - ./docker-compose.yml:/app/docker-compose.yml
     depends_on:
       - redis
-    command: uvicorn app.backend.main:app --host 0.0.0.0 --port 8001 --reload
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8001 --reload
 
   redis:
     image: redis:7-alpine

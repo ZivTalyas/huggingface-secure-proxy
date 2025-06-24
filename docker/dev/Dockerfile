@@ -1,64 +1,81 @@
-# Development Dockerfile
-FROM python:3.11-slim
+# Build stage for C++ module
+FROM python:3.11-slim as builder
 
-WORKDIR /app
-
-# Install system dependencies
+# Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    python3-dev \
     cmake \
-    git \
-    make \
-    g++ \
-    wget \
-    unzip \
     nlohmann-json3-dev \
     libboost-all-dev \
     libpoppler-cpp-dev \
-    libpoppler-dev \
-    poppler-utils \
-    && rm -rf /var/lib/apt/lists/* \
-    && mkdir -p /usr/local/include/nlohmann \
-    && ln -sf /usr/include/nlohmann/json.hpp /usr/local/include/nlohmann/
+    libpoppler-private-dev \
+    pkg-config \
+    python3-pip \
+    python3-venv \
+    python3.11-dev \
+    libpython3.11-dev \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install ONNX Runtime
-RUN mkdir -p /opt/onnxruntime && \
-    cd /opt/onnxruntime && \
-    wget https://github.com/microsoft/onnxruntime/releases/download/v1.15.1/onnxruntime-linux-x64-1.15.1.tgz && \
-    tar -xzf onnxruntime-linux-x64-1.15.1.tgz --strip-components=1 && \
-    rm onnxruntime-linux-x64-1.15.1.tgz && \
-    echo "/opt/onnxruntime/lib" > /etc/ld.so.conf.d/onnxruntime.conf && \
+# Install Python build dependencies
+RUN pip3 install --no-cache-dir --upgrade pip && \
+    pip3 install --no-cache-dir pybind11[global] numpy
+
+# Download and install ONNX Runtime
+ARG ONNXRUNTIME_VERSION=1.15.1
+ARG ONNXRUNTIME_ARCH=x64
+RUN wget https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRUNTIME_VERSION}/onnxruntime-linux-${ONNXRUNTIME_ARCH}-${ONNXRUNTIME_VERSION}.tgz -O onnxruntime.tgz && \
+    tar -zxvf onnxruntime.tgz && \
+    cp -r onnxruntime-linux-${ONNXRUNTIME_ARCH}-${ONNXRUNTIME_VERSION}/include/* /usr/local/include/ && \
+    cp -r onnxruntime-linux-${ONNXRUNTIME_ARCH}-${ONNXRUNTIME_VERSION}/lib/* /usr/local/lib/ && \
+    rm -rf onnxruntime.tgz onnxruntime-linux-${ONNXRUNTIME_ARCH}-${ONNXRUNTIME_VERSION} && \
     ldconfig
 
-# Set environment variables for ONNX Runtime
-ENV ONNXRUNTIME_ROOT_DIR=/opt/onnxruntime
-ENV ONNXRUNTIME_INCLUDE_DIR=/opt/onnxruntime/include/onnxruntime/core/session
-ENV ONNXRUNTIME_LIBRARY_DIR=/opt/onnxruntime/lib
+# Set working directory
+WORKDIR /build
 
-# Initialize environment variables without referencing potentially undefined variables
-ENV LD_LIBRARY_PATH=/opt/onnxruntime/lib
-ENV PATH=$PATH:/opt/onnxruntime/bin
-ENV CMAKE_PREFIX_PATH=/opt/onnxruntime
+# Copy C++ source files
+# COPY cpp/ ./cpp/
 
-# Update ldconfig to include ONNX Runtime libraries
-RUN echo "/opt/onnxruntime/lib" > /etc/ld.so.conf.d/onnxruntime.conf && \
-    ldconfig
+# Build C++ module
+# RUN mkdir -p cpp/build && \
+#     cd cpp/build && \
+#     cmake .. && \
+#     make
+
+# Runtime stage
+FROM python:3.11-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy ONNX runtime libs from builder stage
+# COPY --from=builder /build/cpp/build/security_analyzer.*.so .
+COPY --from=builder /usr/local/lib/libonnxruntime.so* /usr/local/lib/
+RUN ldconfig
+
+# Set working directory
+WORKDIR /app
+
+# Copy Python requirements
+COPY requirements.txt .
 
 # Install Python dependencies
-COPY requirements-dev.txt .
-RUN pip install --no-cache-dir -r requirements-dev.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Set environment variables
-ENV PYTHONPATH=/app
-
-# Set working directory for the application
-WORKDIR /app/app
+# Copy C++ module from builder
+# COPY --from=builder /build/cpp/build/security_analyzer.*.so .
 
 # Copy application code
-COPY app /app/app
+COPY ./app /app/
+COPY run.py .
 
-# Expose ports
-EXPOSE 8000 8080
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
 
-# Default command (starts a shell)
-CMD ["/bin/bash"]
+# Expose backend port
+EXPOSE 8001

@@ -1,59 +1,70 @@
-# Stage 1: Build dependencies
+# Build stage for C++ module
 FROM python:3.11-slim as builder
 
-WORKDIR /app
-
 # Install build dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
-    libcurl4-openssl-dev \
-    libssl-dev \
-    libicu-dev \
-    libboost-dev \
-    libpoppler-dev \
+    git \
+    make \
+    g++ \
+    wget \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Set working directory
+WORKDIR /build
 
-# Copy source code
-COPY . .
+# Copy C++ source files
+COPY cpp/ ./cpp/
 
-# Build C++ components
-WORKDIR /app/cpp
-RUN mkdir -p build && \
-    cd build && \
-    cmake .. && \
+# Build C++ module
+RUN mkdir -p cpp/build && \
+    cd cpp/build && \
+    cmake -DCMAKE_BUILD_TYPE=Release .. && \
     make
 
-# Stage 2: Production image
+# Runtime stage
 FROM python:3.11-slim
 
-WORKDIR /app
-
 # Install runtime dependencies
-RUN apt-get update && apt-get install -y \
-    libicu-dev \
-    libpoppler-dev \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy from builder
-COPY --from=builder /usr/local/lib/python3.11/dist-packages /usr/local/lib/python3.11/dist-packages
-COPY --from=builder /app/app /app/app
-COPY --from=builder /app/cpp/build /app/cpp/build
-COPY --from=builder /app/requirements.txt .
+# Set working directory
+WORKDIR /app
 
-# Set up environment variables
-ENV PYTHONPATH=/app:/app/cpp/build
+# Copy Python requirements
+COPY requirements.txt .
 
-# Expose port
-EXPOSE 8000
+# Install Python dependencies with optimizations
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Add health check
-HEALTHCHECK --interval=30s --timeout=3s \
-    CMD curl -f http://localhost:8000/health || exit 1
+# Copy C++ module from builder
+COPY --from=builder /build/cpp/build/libsecurity_analyzer.so /app/cpp/build/
 
-# Start command with gunicorn for production
-CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "app.main:app", "--bind", "0.0.0.0:8000"]
+# Copy only necessary application code
+COPY app/ ./app/
+COPY run.py .
+COPY .env.example .env  # In production, use a proper secret management solution
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+ENV CPP_MODULE_PATH=/app/cpp/build/libsecurity_analyzer.so
+
+# Create non-root user
+RUN useradd -m appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Expose ports
+EXPOSE 8000 8001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/status || exit 1
+
+# Run the application
+CMD ["python", "run.py"]

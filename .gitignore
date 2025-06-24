@@ -18,3 +18,6 @@ cmake/
 
 # Ignore VSCode files
 .vscode
+
+.env
+.env.example

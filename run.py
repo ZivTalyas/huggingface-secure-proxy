@@ -12,7 +12,7 @@ from typing import List, Optional
 
 # Project root directory
 PROJECT_ROOT = Path(__file__).parent.absolute()
-DOCKER_COMPOSE = PROJECT_ROOT / "docker" / "docker-compose.yml"
+DOCKER_COMPOSE = PROJECT_ROOT / "docker" / "dev" /"docker-compose.yml"
 
 # Docker Compose command with the correct file path
 def docker_compose_cmd(args: List[str]) -> int:

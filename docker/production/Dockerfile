@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
     wget \
     unzip \
+    nlohmann-json3-dev \
+    libboost-regex-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -41,18 +43,14 @@ COPY requirements.txt .
 # Install Python dependencies with optimizations
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy C++ module from builder
-COPY --from=builder /build/cpp/build/libsecurity_analyzer.so /app/cpp/build/
 
 # Copy only necessary application code
 COPY app/ ./app/
 COPY run.py .
-COPY .env.example .env  # In production, use a proper secret management solution
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
-ENV CPP_MODULE_PATH=/app/cpp/build/libsecurity_analyzer.so
 
 # Create non-root user
 RUN useradd -m appuser && \

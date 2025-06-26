@@ -19,5 +19,15 @@ cmake/
 # Ignore VSCode files
 .vscode
 
+# Environment variables
 .env
 .env.example
+
+# Files for testing
+sample_test_file.pdf
+sample_test_file.txt
+
+# Virtual environment
+venv/
+.venv/
+.venv/*

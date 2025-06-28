@@ -7,7 +7,20 @@ import requests
 # Base URL of the running proxy (can be overridden when executing tests)
 BASE_URL = os.getenv("PROXY_BASE_URL", "http://localhost:8000")
 
-class TestSecureInputProxy(unittest.TestCase):    
+class TestSecureInputProxy(unittest.TestCase):
+    def run(self, result=None):
+        """Override run to provide custom start/end logging"""
+        test_name = self._testMethodName
+        print(f"\n--- Running {test_name} ---")
+
+        super_return = super().run(result)
+        res = result if result is not None else self._outcome.result
+        failed = any(case is self for case, _ in res.failures + res.errors)
+        
+        if not failed:
+            print(f"--- {test_name} passed ---")
+        return super_return    
+
     def setUp(self):
         # Base URL for requests
         self.base_url = BASE_URL
@@ -23,14 +36,13 @@ class TestSecureInputProxy(unittest.TestCase):
         self.unsafe_text = "You're so dumb it's funny."
         self.test_file_content = b"This is a test file content."
         self.test_file_b64 = base64.b64encode(self.test_file_content).decode('utf-8')
-    
+
     def test_frontend_health(self):
         """Test frontend health check endpoint"""
         response = requests.get(f"{self.base_url}/status", timeout=5)
         self.assertEqual(response.status_code, 200)
         self.assertIn("status", response.json())
-    
-    
+
     def test_validate_safe_text(self):
         """Test validation of safe text input"""
         response = requests.post(f"{self.base_url}/validate-input",
@@ -90,6 +102,16 @@ class TestSecureInputProxy(unittest.TestCase):
             json={"security_level": "high"}
         )
         self.assertEqual(response.status_code, 400)
+    
+    def test_harmful_keyword(self):
+        """Text containing a known harmful keyword should be unsafe"""
+        toxic = "You are a stupid hacker."
+        r = requests.post(f"{self.base_url}/validate-input",
+                          json={"text": toxic, "security_level": "high"})
+        self.assertEqual(r.status_code, 200)
+        data = r.json()
+        self.assertEqual(data["status"], "unsafe")
+        self.assertIn("toxic_language", data.get("detected_issues", []))
 
 if __name__ == "__main__":
     unittest.main()

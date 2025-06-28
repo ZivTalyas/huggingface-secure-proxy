@@ -9,8 +9,27 @@ import platform
 import logging
 from typing import List, Dict, Any, Optional, Union
 from pathlib import Path
+import json
 
 logger = logging.getLogger(__name__)
+
+# --------------------------------------------------
+# Optional Gemini LLM integration and harmful keywords
+# --------------------------------------------------
+_GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+_GEMINI_ENDPOINT = (
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+    if _GEMINI_API_KEY else None
+)
+
+_HARMFUL_KEYWORDS: List[str] = []
+try:
+    _kw_path = Path(__file__).parent / "harmful_keywords.json"
+    if _kw_path.exists():
+        with open(_kw_path, "r", encoding="utf-8") as _kw_file:
+            _HARMFUL_KEYWORDS = json.load(_kw_file)
+except Exception as _e:
+    logger.warning(f"Failed to load harmful_keywords.json: {_e}")
 
 # Try to load the C++ module
 try:
@@ -123,16 +142,44 @@ class SecurityAnalyzer:
     
     def _fallback_analyze_text(self, text: str) -> Dict[str, Any]:
         """Fallback text analysis when C++ module is not available."""
-        issues = []
-        if any(char in text for char in [';', '--', '/*', '*/', 'xp_', 'UNION', 'SELECT']):
+        issues: List[str] = []
+
+        # -------- Rule-based heuristics --------
+        if any(token.lower() in text.lower() for token in [';', '--', '/*', '*/', 'xp_', 'union', 'select']):
             issues.append('potential_sql_injection')
         if '<script>' in text.lower():
             issues.append('potential_xss')
+        if any(word in text.lower() for word in _HARMFUL_KEYWORDS):
+            issues.append('toxic_language')
+
+        # -------- Gemini LLM toxicity check --------
+        llm_score = 1.0
+        if _GEMINI_ENDPOINT and text.strip():
+            try:
+                import requests as _rq
+                resp = _rq.post(
+                    _GEMINI_ENDPOINT,
+                    params={"key": _GEMINI_API_KEY},
+                    json={
+                        "contents": [{"parts": [{"text": text}]}],
+                        "generationConfig": {"temperature": 0.2}
+                    },
+                    timeout=5
+                )
+                if resp.status_code == 200:
+                    llm_detected_toxic = 'toxic' in resp.text.lower()
+                    llm_score = 0.0 if llm_detected_toxic else 1.0
+                    if llm_detected_toxic and 'toxic_language' not in issues:
+                        issues.append('toxic_language')
+            except Exception as _e:
+                logger.warning(f"Gemini API call failed: {_e}")
+
+        confidence = llm_score if issues else 1.0
         return {
             'is_safe': not issues,
-            'confidence_score': 0.5 if issues else 1.0,
+            'confidence_score': confidence,
             'detected_issues': issues,
-            'analysis_summary': 'Fallback analysis - limited capabilities'
+            'analysis_summary': 'Fallback analysis with keyword and Gemini checks'
         }
     
     def _fallback_analyze_file(self, file_path: Path) -> Dict[str, Any]:

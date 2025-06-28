@@ -1,9 +1,10 @@
 # Core
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
-pydantic==2.5.2
+pydantic==1.10.13
 python-multipart==0.0.6
-pydantic-settings==2.1.0
+# Remove this or downgrade to something that works with pydantic v1, or just remove if unused
+# pydantic-settings==2.1.0
 python-dotenv==1.0.0
 
 # Security

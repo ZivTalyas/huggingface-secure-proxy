@@ -22,7 +22,7 @@ app.add_middleware(
 )
 
 # Configuration
-BACKEND_URL = f"http://{os.getenv('BACKEND_HOST', 'localhost')}:{os.getenv('BACKEND_PORT', '8001')}"
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8001")
 TIMEOUT = 30.0  # seconds
 
 class ValidationRequest(BaseModel):

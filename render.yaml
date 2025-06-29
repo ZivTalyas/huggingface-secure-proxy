@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: frontend
+    name: safe-input-proxy-frontend
     runtime: image
     plan: free
     image:
@@ -10,10 +10,8 @@ services:
         value: 0.0.0.0
       - key: FRONTEND_PORT
         value: "8000"
-      - key: BACKEND_HOST
-        value: backend
-      - key: BACKEND_PORT
-        value: "8001"
+      - key: BACKEND_URL
+        value: https://safe-input-proxy-backend.onrender.com
       - key: SECURITY_LEVEL
         value: high
       - key: PYTHONUNBUFFERED
@@ -24,7 +22,7 @@ services:
     autoDeployTrigger: commit
 
   - type: web
-    name: backend
+    name: safe-input-proxy-backend
     runtime: image
     plan: free
     image:

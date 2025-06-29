@@ -52,5 +52,5 @@ services:
     plan: free
     maxmemoryPolicy: allkeys-lru
     ipAllowList:
-      - source: 0.0.0.0/0
-        description: Allow all IPs (dev only)
+      - source: internal
+        description: Allow only internal Render services

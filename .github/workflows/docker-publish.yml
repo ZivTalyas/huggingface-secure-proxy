@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build-and-push:
@@ -28,6 +29,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: ./docker/dev/Dockerfile
           push: true
           tags: ghcr.io/zivtalyas/safe-input-proxy:latest
 

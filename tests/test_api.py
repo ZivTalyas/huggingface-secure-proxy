@@ -5,7 +5,7 @@ import base64
 import requests
 
 # Base URL of the running proxy (can be overridden when executing tests)
-BASE_URL = os.getenv("PROXY_BASE_URL", "http://localhost:8000")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8001")
 
 class TestSecureInputProxy(unittest.TestCase):
     def run(self, result=None):

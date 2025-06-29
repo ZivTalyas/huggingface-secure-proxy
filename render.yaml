@@ -46,3 +46,7 @@ services:
         value: /app:/app/tests
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port 8001 --reload
     autoDeploy: true
+
+  - type: redis
+    name: redis
+    ipAllowList: [] # open to all internal services

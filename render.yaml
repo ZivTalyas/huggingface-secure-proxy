@@ -3,7 +3,7 @@ services:
     name: frontend
     plan: free
     image:
-    url: ghcr.io/zivtalyas/safe-input-proxy-frontend:latest
+      url: ghcr.io/zivtalyas/safe-input-proxy-frontend:latest
     envVars:
       - key: FRONTEND_HOST
         value: 0.0.0.0

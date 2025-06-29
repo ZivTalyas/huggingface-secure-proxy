@@ -1,8 +1,51 @@
 services:
   - type: web
-    name: safe-input-proxy
-    env: python
+    name: frontend
     plan: free
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn app.backend.main:app --host 0.0.0.0 --port $PORT"
+    image: ghcr.io/zivtalyas/safe-input-proxy-frontend:latest
+    envVars:
+      - key: FRONTEND_HOST
+        value: 0.0.0.0
+      - key: FRONTEND_PORT
+        value: 8000
+      - key: BACKEND_HOST
+        value: backend
+      - key: BACKEND_PORT
+        value: 8001
+      - key: SECURITY_LEVEL
+        value: high
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHONPATH
+        value: /app:/app/tests
+    startCommand: uvicorn frontend.main:app --host 0.0.0.0 --port 8000 --reload
     autoDeploy: true
+
+  - type: web
+    name: backend
+    plan: free
+    image: ghcr.io/zivtalyas/safe-input-proxy-backend:latest
+    envVars:
+      - key: BACKEND_HOST
+        value: 0.0.0.0
+      - key: BACKEND_PORT
+        value: 8001
+      - key: MODEL_NAME
+        value: distilbert-base-uncased
+      - key: TOXIC_THRESHOLD
+        value: "0.7"
+      - key: REDIS_HOST
+        value: redis
+      - key: REDIS_PORT
+        value: 6379
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHONPATH
+        value: /app:/app/tests
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port 8001 --reload
+    autoDeploy: true
+
+  - type: redis
+    name: redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru

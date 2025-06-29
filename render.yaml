@@ -51,6 +51,3 @@ services:
     name: redis
     plan: free
     maxmemoryPolicy: allkeys-lru
-    ipAllowList:
-      - source: 0.0.0.0/0
-        description: Allow all (for Render services; restrict for prod if possible)

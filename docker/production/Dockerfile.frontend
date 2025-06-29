@@ -9,7 +9,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy only frontend code
 COPY app/frontend ./frontend
-COPY app/common ./common
 
 # Expose frontend port
 EXPOSE 8000

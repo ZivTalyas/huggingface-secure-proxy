@@ -9,7 +9,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy only backend code
 COPY app/backend ./backend
-COPY app/common ./common
 
 # Expose backend port
 EXPOSE 8001

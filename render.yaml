@@ -11,7 +11,7 @@ services:
       - key: FRONTEND_PORT
         value: "8000"
       - key: BACKEND_URL
-        value: https://backend-pgi6.onrender.com
+        value: https://safe-input-proxy-backend.onrender.com
       - key: SECURITY_LEVEL
         value: high
       - key: PYTHONUNBUFFERED

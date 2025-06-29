@@ -51,3 +51,6 @@ services:
     name: redis
     plan: free
     maxmemoryPolicy: allkeys-lru
+    ipAllowList:
+      - source: 85.250.88.181/32
+        description: Ziv's office/home IP

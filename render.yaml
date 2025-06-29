@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: frontend
+    name: safe-input-proxy-frontend
     runtime: image
     plan: free
     image:
@@ -22,7 +22,7 @@ services:
     autoDeployTrigger: commit
 
   - type: web
-    name: backend
+    name: safe-input-proxy-backend
     runtime: image
     plan: free
     image:

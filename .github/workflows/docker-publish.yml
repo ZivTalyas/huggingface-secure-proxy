@@ -29,18 +29,16 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/dev/Dockerfile
+          file: ./docker/production/Dockerfile.frontend
           push: true
-          target: frontend
           tags: ghcr.io/zivtalyas/safe-input-proxy-frontend:latest
 
       - name: Build and push backend image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/dev/Dockerfile
+          file: ./docker/production/Dockerfile.backend
           push: true
-          target: backend
           tags: ghcr.io/zivtalyas/safe-input-proxy-backend:latest
 
       # Optional: Notify Render to deploy the new image

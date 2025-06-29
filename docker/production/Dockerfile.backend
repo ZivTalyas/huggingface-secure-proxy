@@ -1,0 +1,22 @@
+# Dockerfile for backend (cloud build)
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy backend and security code
+COPY app/backend ./backend
+COPY app/security ./security
+
+# Expose backend port for Render Free plan
+EXPOSE 10000
+
+# Set environment variables (can be overridden by Render)
+ENV BACKEND_HOST=0.0.0.0 \
+    BACKEND_PORT=10000 \
+    PYTHONUNBUFFERED=1
+
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "10000"]

@@ -41,6 +41,14 @@ jobs:
           push: true
           tags: ghcr.io/zivtalyas/safe-input-proxy-backend:latest
 
+      - name: Trigger Render deploy (frontend)
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL_FORNT }}"
+
+      - name: Trigger Render deploy (backend)
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL_BACKEND }}"
+
       # Optional: Notify Render to deploy the new image
       # - name: Trigger Render deploy
       #   run: |

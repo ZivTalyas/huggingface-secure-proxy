@@ -23,7 +23,11 @@ app.add_middleware(
 )
 
 # Configuration
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8001")
+BACKEND_URL = os.getenv("BACKEND_URL")
+if not BACKEND_URL:
+    BACKEND_HOST = os.getenv("BACKEND_HOST", "localhost")
+    BACKEND_PORT = os.getenv("BACKEND_PORT", "8001")
+    BACKEND_URL = f"http://{BACKEND_HOST}:{BACKEND_PORT}"
 TIMEOUT = 30.0  # seconds
 
 # Mount static files

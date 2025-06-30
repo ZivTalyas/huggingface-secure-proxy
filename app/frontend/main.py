@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, HttpUrl
 from typing import Optional, Union
 import httpx
@@ -25,10 +26,18 @@ app.add_middleware(
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8001")
 TIMEOUT = 30.0  # seconds
 
+# Mount static files
+app.mount("/static", StaticFiles(directory="app/frontend/static"), name="static")
+
 class ValidationRequest(BaseModel):
     text: Optional[str] = None
     file: Optional[str] = None  # base64 encoded file content
     security_level: str = "high"
+
+@app.get("/")
+async def read_index():
+    """Serve the main UI page."""
+    return FileResponse('app/frontend/static/index.html')
 
 @app.get("/status")
 async def get_status():

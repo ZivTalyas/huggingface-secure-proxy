@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safe Input Proxy</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Safe Input Proxy</h1>
+            <p>Your shield against malicious inputs.</p>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <textarea id="text-input" placeholder="Enter text to validate..."></textarea>
+                <div class="file-upload">
+                    <input type="file" id="file-input" accept=".txt,.pdf" hidden/>
+                    <button id="upload-button">Upload .txt or .pdf</button>
+                    <span id="file-name">No file selected</span>
+                </div>
+                <button id="validate-button">Validate</button>
+            </div>
+
+            <div class="result-section">
+                <h2>Validation Result</h2>
+                <pre id="result-output"><code>...</code></pre>
+            </div>
+        </main>
+
+        <footer>
+            <div class="dev-info">
+                <h3 id="dev-toggle">API for Developers &gt;</h3>
+                <div id="dev-details" class="hidden">
+                    <h4>Validate via API</h4>
+                    <p>Send a POST request to <code>/validate-input</code> with a JSON body:</p>
+                    <pre><code>{
+    "text": "your text here",
+    "file": "base64-encoded-file-content",
+    "security_level": "high"
+}</code></pre>
+                </div>
+            </div>
+        </footer>
+    </div>
+    <script src="/static/script.js"></script>
+</body>
+</html> 

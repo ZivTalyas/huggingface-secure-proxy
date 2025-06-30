@@ -1,0 +1,46 @@
+name: Test Cloud Deployment
+
+on:
+  workflow_run:
+    workflows: ["Build and Push Docker image"]  # This is the name of your docker-publish.yml workflow
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:  # Keeping manual trigger for debugging
+
+jobs:
+  test-cloud:
+    runs-on: ubuntu-latest
+    environment: Render
+    # Only run if the triggering workflow succeeded and it was triggered by a PR
+    if: |
+      (github.event.workflow_run.conclusion == 'success' && 
+      github.event.workflow_run.event == 'pull_request') || 
+      github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest requests
+
+      - name: Wait for deployment to complete
+        run: |
+          # Wait for services to be ready (adjust time as needed)
+          echo "Waiting for Render deployment to complete..."
+          sleep 120
+
+      - name: Run API tests against cloud services
+        run: |
+          python -m pytest tests/test_api.py -v
+        env:
+          BACKEND_URL: ${{ secrets.RENDER_BACKEND_URL }} 

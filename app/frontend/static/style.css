@@ -176,4 +176,11 @@ footer {
     padding: 1.5rem;
     border-radius: 8px;
     border: 1px solid #dee2e6;
+}
+
+#status-indicator {
+    padding: 1rem 0;
+    color: #6c757d;
+    text-align: center;
+    font-style: italic;
 } 

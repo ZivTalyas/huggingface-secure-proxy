@@ -1,6 +1,25 @@
 # Secure Input Validation Proxy
 
+[![Production is Live](https://img.shields.io/badge/Production-Live-brightgreen?logo=render&style=for-the-badge)](https://safe-input-proxy-frontend.onrender.com)
+
 A secure input validation proxy designed to sit between users/chatbots and NLP/ML models. It ensures that only validated, safe text or file inputs are allowed to proceed into processing, protecting your system from malicious or harmful content.
+
+---
+
+## 🌐 [Click here to try the Live Application!](https://safe-input-proxy-frontend.onrender.com)
+
+[![Open in Production](https://img.shields.io/badge/Open%20App-Frontend-blue?logo=render&style=for-the-badge)](https://safe-input-proxy-frontend.onrender.com)
+
+---
+
+## 🚦 CI/CD Status
+
+| Workflow         | Status |
+|------------------|--------|
+| Docker Publish   | ![Docker Publish](https://github.com/zivtalyas/safe-input-proxy/actions/workflows/docker-publish.yml/badge.svg) |
+| Test Cloud       | ![Test Cloud](https://github.com/zivtalyas/safe-input-proxy/actions/workflows/test-cloud.yml/badge.svg) |
+
+---
 
 ## 🚀 Features
 

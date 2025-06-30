@@ -7,9 +7,56 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultOutput = document.querySelector('#result-output code');
     const devToggle = document.getElementById('dev-toggle');
     const devDetails = document.getElementById('dev-details');
+    const statusIndicator = document.getElementById('status-indicator');
+    const resultOutputContainer = document.getElementById('result-output');
 
     let base64File = null;
 
+    // --- Backend Wake-up Logic ---
+    const wakeUpBackend = async () => {
+        console.log('Attempting to wake up backend...');
+        validateButton.disabled = true;
+
+        const maxRetries = 10;
+        let attempt = 0;
+
+        const intervalId = setInterval(async () => {
+            attempt++;
+            if (attempt > maxRetries) {
+                clearInterval(intervalId);
+                statusIndicator.textContent = 'Could not connect to the server. Please try refreshing the page.';
+                statusIndicator.style.color = '#dc3545';
+                return;
+            }
+
+            try {
+                // The BACKEND_URL is now accessed via this special endpoint.
+                const backendUrlResponse = await fetch('/get-backend-url');
+                const backendUrlData = await backendUrlResponse.json();
+                const backendUrl = backendUrlData.url;
+
+                if (!backendUrl) {
+                    throw new Error("Backend URL not configured.");
+                }
+
+                const response = await fetch(`${backendUrl}/health`);
+                
+                if (response.ok) {
+                    clearInterval(intervalId);
+                    console.log('Backend is awake!');
+                    statusIndicator.classList.add('hidden');
+                    resultOutputContainer.classList.remove('hidden');
+                    validateButton.disabled = false;
+                } else {
+                    console.log(`Backend not ready yet (attempt ${attempt})...`);
+                }
+            } catch (error) {
+                console.error(`Wake-up attempt ${attempt} failed:`, error);
+            }
+        }, 3000); // Retry every 3 seconds
+    };
+    
+    // --- Event Listeners ---
     uploadButton.addEventListener('click', () => {
         fileInput.click();
     });
@@ -73,4 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         devToggle.setAttribute('aria-expanded', !isHidden);
         devToggle.innerHTML = isHidden ? 'Developer API &gt;' : 'Developer API &lt;';
     });
+
+    // --- Initializations ---
+    wakeUpBackend();
 }); 

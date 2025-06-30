@@ -48,6 +48,11 @@ async def read_index():
     """Serve the main UI page."""
     return FileResponse(str(STATIC_DIR / "index.html"))
 
+@app.get("/get-backend-url")
+async def get_backend_url():
+    """Expose the backend URL to the client-side script."""
+    return {"url": BACKEND_URL}
+
 @app.get("/status")
 async def get_status():
     """Check if the application and its internal systems are running."""

@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 3.18)
 
 # Add necessary paths for dependencies
-list(APPEND CMAKE_PREFIX_PATH "/usr/local") # For ONNX Runtime
 list(APPEND CMAKE_PREFIX_PATH "/usr/lib/x86_64-linux-gnu/cmake/poppler") # For Poppler
 
 project(SecurityEngine VERSION 1.0.0 LANGUAGES CXX)
+
+# Set position independent code
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # Set C++ standard
 set(CMAKE_CXX_STANDARD 17)
@@ -16,7 +18,6 @@ option(BUILD_TESTS "Build test executables" ON)
 option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
 
 # Add subdirectories
-add_subdirectory(mlInterface)
 add_subdirectory(textProcessor)
 
 # Add source files for security analyzer library
@@ -28,11 +29,7 @@ set(SECURITY_ANALYZER_SOURCES
 # Create the security analyzer library
 add_library(security_analyzer ${SECURITY_ANALYZER_SOURCES})
 
-target_include_directories(security_analyzer
-    PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-        $<INSTALL_INTERFACE:include>
-)
+target_include_directories(security_analyzer PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Find required packages
 find_package(Boost 1.70 REQUIRED COMPONENTS regex)
@@ -47,7 +44,6 @@ target_link_libraries(security_analyzer
         Boost::regex
         PkgConfig::POPPLER
         text_processor
-        ml_interface
 )
 
 # Python bindings
@@ -70,6 +66,8 @@ if(BUILD_PYTHON_BINDINGS)
         bindings/python_bindings.cpp
     )
     
+    target_include_directories(security_analyzer_py PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
     target_link_libraries(security_analyzer_py
         PRIVATE
             security_analyzer

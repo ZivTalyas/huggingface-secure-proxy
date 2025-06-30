@@ -5,15 +5,17 @@
 namespace py = pybind11;
 
 PYBIND11_MODULE(security_analyzer, m) {
-    py::class_<SecurityAnalyzer::AnalysisResult>(m, "AnalysisResult")
-        .def_readonly("is_safe", &SecurityAnalyzer::AnalysisResult::is_safe)
-        .def_readonly("confidence_score", &SecurityAnalyzer::AnalysisResult::confidence_score)
-        .def_readonly("detected_issues", &SecurityAnalyzer::AnalysisResult::detected_issues)
-        .def_readonly("analysis_summary", &SecurityAnalyzer::AnalysisResult::analysis_summary);
+    m.doc() = "Python bindings for the Security Analyzer";
+
+    py::class_<AnalysisResult>(m, "AnalysisResult")
+        .def_readonly("is_safe", &AnalysisResult::is_safe)
+        .def_readonly("confidence_score", &AnalysisResult::confidence_score)
+        .def_readonly("detected_issues", &AnalysisResult::detected_issues)
+        .def_readonly("analysis_summary", &AnalysisResult::analysis_summary);
 
     py::class_<SecurityAnalyzer>(m, "SecurityAnalyzer")
         .def(py::init<>())
-        .def("analyze_text", &SecurityAnalyzer::analyzeText, "Analyze text for security issues")
+        .def("analyze_text", &SecurityAnalyzer::analyzeText, "Analyzes a string of text for security vulnerabilities")
         .def("analyze_pdf", [](SecurityAnalyzer& self, const std::vector<uint8_t>& data) {
             return self.analyzePDF(data);
         }, "Analyze PDF data for security issues")

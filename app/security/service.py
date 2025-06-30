@@ -69,19 +69,23 @@ class SecurityService:
             logger.error(f"Error validating file: {e}", exc_info=True)
             return {"status": "error", "reason": "validation_error", "error": str(e)}
 
-    def _process_analysis_results(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_analysis_results(self, analysis: Any) -> Dict[str, Any]:
         """Process the analysis results and calculate scores."""
-        detected_issues = analysis.get("detected_issues", [])
+        if isinstance(analysis, dict):
+            detected_issues = analysis.get('detected_issues', [])
+            confidence = analysis.get('confidence_score', 1.0)
+        else:
+            detected_issues = analysis.detected_issues
+            confidence = analysis.confidence_score
+
         if detected_issues:
             return {
                 "status": "unsafe",
                 "reason": ", ".join(detected_issues),
-                "llm_score": analysis.get("confidence_score", 0.0) if self.config["deep_analysis"] else 1.0,
+                "llm_score": confidence if self.config["deep_analysis"] else 1.0,
                 "rule_score": 0.0,
                 "overall_score": 0.0,
             }
-
-        confidence = analysis.get("confidence_score", 1.0)
         
         rule_score = 1.0
         llm_score = confidence if self.config["deep_analysis"] else 1.0

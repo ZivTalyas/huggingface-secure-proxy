@@ -94,6 +94,13 @@ textarea#text-input:focus {
 /* --- File Upload & Button Wrapper --- */
 .actions-wrapper {
     display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+}
+
+.top-actions {
+    display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
@@ -113,47 +120,49 @@ textarea#text-input:focus {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 200px;
+    max-width: 150px;
 }
 
 /* --- Buttons --- */
 .btn {
     padding: 0.75rem 1.5rem;
-    border: none;
     border-radius: 10px;
     cursor: pointer;
-    font-weight: 700;
+    font-weight: 500;
     font-size: 1em;
     transition: all 0.2s ease;
-    min-height: 48px; /* Touch-friendly size */
-    box-sizing: border-box;
     display: inline-flex;
     justify-content: center;
     align-items: center;
-}
-
-#upload-button {
-    background-color: #404040;
-    color: var(--text-color);
-}
-
-#upload-button:hover {
-    background-color: #505050;
+    gap: 0.5rem;
+    border: 1px solid transparent;
 }
 
 #validate-button {
+    align-self: center;
+    padding: 0.9rem 1.8rem;
+    margin-top: 1rem;
+}
+
+#upload-button {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9em;
+}
+
+.btn-primary {
     background-color: var(--accent-color);
     color: #111;
+    font-weight: 700;
     box-shadow: 0 4px 15px rgba(0, 198, 167, 0.2);
 }
 
-#validate-button:hover {
+.btn-primary:hover {
     background-color: var(--accent-color-dark);
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0, 198, 167, 0.25);
 }
 
-#validate-button:disabled {
+.btn-primary:disabled {
     background-color: #555;
     color: #888;
     cursor: not-allowed;
@@ -162,16 +171,38 @@ textarea#text-input:focus {
 }
 
 .btn-secondary {
-    /* ... existing styles ... */
+    background-color: #383838;
+    color: var(--text-color);
+    border-color: var(--border-color);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary:hover {
+    background-color: #454545;
+    border-color: #555;
+    transform: translateY(-1px);
+}
+
+.btn-secondary svg {
+    stroke: var(--text-secondary-color);
 }
 
 .security-selector {
     display: flex;
+    align-items: center;
     background-color: var(--bg-color);
     border-radius: 8px;
     padding: 4px;
     border: 1px solid var(--border-color);
 }
+
+.security-level-label {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    font-size: 0.9em;
+    color: var(--text-secondary-color);
+}
+
 .security-btn {
     padding: 0.4rem 0.8rem;
     background-color: transparent;

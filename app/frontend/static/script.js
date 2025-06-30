@@ -9,8 +9,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const devDetails = document.getElementById('dev-details');
     const statusIndicator = document.getElementById('status-indicator');
     const resultOutputContainer = document.getElementById('result-output');
+    const analysisResultContainer = document.getElementById('analysis-result');
+    const securitySelector = document.getElementById('security-level-selector');
 
     let base64File = null;
+    let currentSecurityLevel = 'high'; // Default security level
 
     // --- Backend Wake-up Logic ---
     const wakeUpBackend = async () => {
@@ -71,6 +74,20 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // --- Event Listeners ---
+    securitySelector.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            // Remove active class from all buttons
+            securitySelector.querySelectorAll('.security-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            // Add active class to the clicked button
+            e.target.classList.add('active');
+            // Update the current security level
+            currentSecurityLevel = e.target.dataset.level;
+            console.log(`Security level set to: ${currentSecurityLevel}`);
+        }
+    });
+
     uploadButton.addEventListener('click', () => {
         fileInput.click();
     });
@@ -102,30 +119,28 @@ document.addEventListener('DOMContentLoaded', () => {
     validateButton.addEventListener('click', async () => {
         const text = textInput.value;
         if (!text && !base64File) {
-            resultOutput.textContent = JSON.stringify({ error: 'Please provide text or a file.' }, null, 2);
+            alert('Please provide text or a file to analyze.');
             return;
         }
 
-        resultOutput.textContent = 'Validating...';
+        analysisResultContainer.classList.remove('hidden');
+        analysisResultContainer.innerHTML = `<div id="status-indicator">Analyzing...</div>`;
 
         try {
             const response = await fetch('/validate-input', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     text: text || null,
                     file: base64File,
-                    security_level: 'high'
+                    security_level: currentSecurityLevel
                 }),
             });
-
             const result = await response.json();
-            resultOutput.textContent = JSON.stringify(result, null, 2);
-
+            displayFormattedResult(result);
         } catch (error) {
-            resultOutput.textContent = JSON.stringify({ error: 'Failed to fetch validation result.', details: error.message }, null, 2);
+            analysisResultContainer.innerHTML = `<div class="result-reason">Error: Failed to fetch validation result.</div>`;
+            console.error('Validation fetch error:', error);
         }
     });
 
@@ -134,6 +149,49 @@ document.addEventListener('DOMContentLoaded', () => {
         devToggle.setAttribute('aria-expanded', !isHidden);
         devToggle.innerHTML = isHidden ? 'Developer API &gt;' : 'Developer API &lt;';
     });
+
+    // --- UI Update Functions ---
+    const displayFormattedResult = (result) => {
+        analysisResultContainer.innerHTML = ''; // Clear previous results
+        analysisResultContainer.classList.remove('hidden');
+
+        const isSafe = result.status === 'safe';
+        const icon = isSafe 
+            ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="result-title safe"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="result-title unsafe"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>`;
+
+        const createScoreBar = (label, score) => {
+            const scorePercent = (score || 0) * 100;
+            return `
+                <div class="score-item">
+                    <div class="score-label">
+                        <span>${label}</span>
+                        <span class="score-value">${scorePercent.toFixed(0)}%</span>
+                    </div>
+                    <div class="score-bar">
+                        <div class="score-bar-inner" style="width: ${scorePercent}%;"></div>
+                    </div>
+                </div>
+            `;
+        };
+
+        const resultHTML = `
+            <div class="result-header">
+                ${icon}
+                <div>
+                    <h2 class="result-title ${result.status}">${isSafe ? 'Analysis Complete: Safe' : 'Analysis Complete: Unsafe'}</h2>
+                    <p class="result-reason">Reason: ${result.reason}</p>
+                </div>
+            </div>
+            <div class="result-details">
+                ${createScoreBar('Language Model Score', result.llm_score)}
+                ${createScoreBar('Rule-Based Score', result.rule_score)}
+                ${createScoreBar('Overall Risk Score', result.overall_score)}
+            </div>
+        `;
+
+        analysisResultContainer.innerHTML = resultHTML;
+    };
 
     // --- Initializations ---
     wakeUpBackend();

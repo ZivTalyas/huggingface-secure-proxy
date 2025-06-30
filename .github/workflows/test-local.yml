@@ -1,17 +1,19 @@
-name: API Tests
+name: Test Local Containers
 
 on:
-  push:
-    branches: [ '*' ]
   pull_request:
+    branches:
+      - main
+  workflow_dispatch:  # Keeping manual trigger for debugging
 
 jobs:
-  tests:
+  test-local:
     runs-on: ubuntu-latest
     env:
       PROXY_BASE_URL: http://localhost:8000
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Build and start stack
         run: |
@@ -49,4 +51,5 @@ jobs:
 
       - name: Shutdown stack
         if: always()
-        run: docker compose -f docker/dev/docker-compose.yml down
+        run: |
+          docker compose -f docker/dev/docker-compose.yml down 

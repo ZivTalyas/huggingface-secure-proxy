@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -31,7 +32,8 @@ jobs:
         with:
           context: .
           file: ./docker/production/Dockerfile.frontend
-          push: true
+          push: ${{ github.event_name == 'push' }}
+          load: ${{ github.event_name == 'pull_request' }}
           tags: ghcr.io/zivtalyas/safe-input-proxy-frontend:latest
 
       - name: Build and push backend image
@@ -39,18 +41,16 @@ jobs:
         with:
           context: .
           file: ./docker/production/Dockerfile.backend
-          push: true
+          push: ${{ github.event_name == 'push' }}
+          load: ${{ github.event_name == 'pull_request' }}
           tags: ghcr.io/zivtalyas/safe-input-proxy-backend:latest
 
       - name: Trigger Render deploy (frontend)
+        if: github.event_name == 'push'
         run: |
           curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL_FORNT }}"
 
       - name: Trigger Render deploy (backend)
+        if: github.event_name == 'push'
         run: |
           curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL_BACKEND }}"
-
-      # Optional: Notify Render to deploy the new image
-      # - name: Trigger Render deploy
-      #   run: |
-      #     curl -X POST "https://api.render.com/deploy/srv-xxxxxx?key=YOUR_RENDER_DEPLOY_HOOK"

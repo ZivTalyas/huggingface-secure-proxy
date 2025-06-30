@@ -1,97 +1,43 @@
 name: Test Cloud Deployment
 
 on:
-  workflow_run:
-    workflows: ["Build and Push Docker image"]
-    types:
-      - completed
-  workflow_dispatch:  # Keeping manual trigger for debugging
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   test-cloud:
     runs-on: ubuntu-latest
     environment: Render
-    # Run when the build workflow succeeds
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
-    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Wait for deployment to complete
+      - name: Wait for deployment to complete (main only)
+        if: github.event_name == 'push'
         run: |
           echo "Waiting for Render deployment to complete..."
-          # Initial wait to allow Render to start deployment
-          echo "Initial wait for deployment to start..."
-          sleep 60  # Give Render time to pick up new Docker images
-
-          # Now check if services are responding
+          sleep 60
           echo "Checking service health..."
-          timeout=600  # 10 minutes timeout for health check
+          timeout=600
           frontend_url="${{ secrets.RENDER_FRONTEND_URL }}"
           backend_url="${{ secrets.RENDER_BACKEND_URL }}"
-          
-          # Validate URLs
           if [[ ! "$frontend_url" =~ ^https?:// ]]; then
-            echo "❌ Invalid frontend URL: $frontend_url"
-            echo "Frontend URL must start with http:// or https://"
-            exit 1
-          fi
-          
+            echo "❌ Invalid frontend URL: $frontend_url"; exit 1; fi
           if [[ ! "$backend_url" =~ ^https?:// ]]; then
-            echo "❌ Invalid backend URL: $backend_url"
-            echo "Backend URL must start with http:// or https://"
-            exit 1
-          fi
-          
-          echo "Checking frontend URL: $frontend_url"
-          echo "Checking backend URL: $backend_url"
-          
+            echo "❌ Invalid backend URL: $backend_url"; exit 1; fi
           until [ $timeout -eq 0 ]; do
             frontend_ok=false
             backend_ok=false
-            
-            # Check frontend
-            if curl -s "$frontend_url/status" | grep -q '"status"'; then
-              frontend_ok=true
-              echo "✅ Frontend is ready"
-            else
-              echo "⏳ Waiting for frontend..."
-              echo "Frontend response:"
-              curl -v "$frontend_url/status" || true
-            fi
-            
-            # Check backend
-            if curl -s "$backend_url/health" | grep -q '"status"'; then
-              backend_ok=true
-              echo "✅ Backend is ready"
-            else
-              echo "⏳ Waiting for backend..."
-              echo "Backend response:"
-              curl -v "$backend_url/health" || true
-            fi
-            
-            # If both are ready, break the loop
-            if [ "$frontend_ok" = true ] && [ "$backend_ok" = true ]; then
-              echo "✅ All services are ready!"
-              break
-            fi
-            
-            sleep 20
-            timeout=$((timeout-20))
-            echo "Remaining timeout: $timeout seconds"
+            if curl -s "$frontend_url/status" | grep -q '"status"'; then frontend_ok=true; fi
+            if curl -s "$backend_url/health" | grep -q '"status"'; then backend_ok=true; fi
+            if [ "$frontend_ok" = true ] && [ "$backend_ok" = true ]; then break; fi
+            sleep 20; timeout=$((timeout-20));
           done
-
           if [ $timeout -eq 0 ]; then
-            echo "❌ Services did not become ready in Render within timeout"
-            echo "Frontend status:"
-            curl -v "$frontend_url/status" || true
-            echo "Backend status:"
-            curl -v "$backend_url/health" || true
-            exit 1
-          fi
+            echo "❌ Services did not become ready in Render within timeout"; exit 1; fi
 
       - name: Run test suite with allowed failures
         run: |
@@ -100,7 +46,6 @@ jobs:
           status=$?
           echo "$output"
           if [ $status -ne 0 ]; then
-            # extract failing test method names
             fails=$(echo "$output" | grep -oP '^FAIL: \w+' | awk '{print $2}')
             allowed="test_harmful_keyword test_validate_unsafe_text test_validate_file_upload_pdf test_validate_file_upload_txt"
             for f in $fails; do

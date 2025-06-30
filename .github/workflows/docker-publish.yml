@@ -11,8 +11,6 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     environment: Render
-    outputs:
-      build_success: ${{ steps.set-result.outputs.success }}
 
     permissions:
       contents: read
@@ -34,7 +32,7 @@ jobs:
         with:
           context: .
           file: ./docker/production/Dockerfile.frontend
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name == 'push' }}
           load: ${{ github.event_name == 'pull_request' }}
           tags: ghcr.io/zivtalyas/safe-input-proxy-frontend:latest
 
@@ -43,26 +41,16 @@ jobs:
         with:
           context: .
           file: ./docker/production/Dockerfile.backend
-          push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name == 'push' }}
           load: ${{ github.event_name == 'pull_request' }}
           tags: ghcr.io/zivtalyas/safe-input-proxy-backend:latest
 
-      # Only trigger Render deploy on push to main
       - name: Trigger Render deploy (frontend)
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push'
         run: |
           curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL_FORNT }}"
 
       - name: Trigger Render deploy (backend)
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push'
         run: |
           curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL_BACKEND }}"
-
-      - name: Set result output
-        id: set-result
-        run: echo "success=true" >> $GITHUB_OUTPUT
-
-      # Optional: Notify Render to deploy the new image
-      # - name: Trigger Render deploy
-      #   run: |
-      #     curl -X POST "https://api.render.com/deploy/srv-xxxxxx?key=YOUR_RENDER_DEPLOY_HOOK"

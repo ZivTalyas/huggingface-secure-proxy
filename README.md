@@ -10,6 +10,8 @@ A secure input validation proxy designed to sit between users/chatbots and NLP/M
 
 [![Open in Production](https://img.shields.io/badge/Open%20App-Frontend-blue?logo=render&style=for-the-badge)](https://safe-input-proxy-frontend.onrender.com)
 
+The application now features a modern, user-friendly interface for validating text and files (`.txt`, `.pdf`).
+
 ---
 
 ## 🚦 CI/CD Status

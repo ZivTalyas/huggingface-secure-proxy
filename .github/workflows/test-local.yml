@@ -13,6 +13,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -23,10 +26,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest requests
 
-      - name: Start services with docker-compose
+      - name: Start services with docker compose
         run: |
           cd docker/dev
-          docker-compose up -d
+          docker compose up -d
           # Wait for services to be ready
           sleep 30
 
@@ -40,4 +43,4 @@ jobs:
         if: always()  # Run this step even if tests fail
         run: |
           cd docker/dev
-          docker-compose down 
+          docker compose down 

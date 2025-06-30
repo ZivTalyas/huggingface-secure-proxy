@@ -7,6 +7,7 @@ from typing import Optional, Union
 import httpx
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
 # Load environment variables
 load_dotenv()
@@ -30,8 +31,12 @@ if not BACKEND_URL:
     BACKEND_URL = f"http://{BACKEND_HOST}:{BACKEND_PORT}"
 TIMEOUT = 30.0  # seconds
 
+# Determine static directory path relative to this file
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+
 # Mount static files
-app.mount("/static", StaticFiles(directory="app/frontend/static"), name="static")
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 class ValidationRequest(BaseModel):
     text: Optional[str] = None
@@ -41,7 +46,7 @@ class ValidationRequest(BaseModel):
 @app.get("/")
 async def read_index():
     """Serve the main UI page."""
-    return FileResponse('app/frontend/static/index.html')
+    return FileResponse(str(STATIC_DIR / "index.html"))
 
 @app.get("/status")
 async def get_status():

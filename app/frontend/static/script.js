@@ -69,7 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     devToggle.addEventListener('click', () => {
-        devDetails.classList.toggle('hidden');
-        devToggle.textContent = devDetails.classList.contains('hidden') ? 'API for Developers >' : 'API for Developers <';
+        const isHidden = devDetails.classList.toggle('hidden');
+        devToggle.setAttribute('aria-expanded', !isHidden);
+        devToggle.innerHTML = isHidden ? 'Developer API &gt;' : 'Developer API &lt;';
     });
 }); 

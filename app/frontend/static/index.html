@@ -5,35 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Safe Input Proxy</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Safe Input Proxy</h1>
-            <p>Your shield against malicious inputs.</p>
+            <h1>Secure Input Gateway</h1>
+            <p>Protecting your applications with intelligent input validation.</p>
         </header>
 
         <main>
             <div class="input-section">
-                <textarea id="text-input" placeholder="Enter text to validate..."></textarea>
+                <textarea id="text-input" placeholder="Enter text to validate..." aria-label="Text input for validation"></textarea>
                 <div class="file-upload">
-                    <input type="file" id="file-input" accept=".txt,.pdf" hidden/>
-                    <button id="upload-button">Upload .txt or .pdf</button>
+                    <input type="file" id="file-input" accept=".txt,.pdf" hidden aria-label="File input"/>
+                    <button id="upload-button">Upload File</button>
                     <span id="file-name">No file selected</span>
                 </div>
-                <button id="validate-button">Validate</button>
+                <button id="validate-button" aria-label="Validate input">Validate</button>
             </div>
 
             <div class="result-section">
-                <h2>Validation Result</h2>
-                <pre id="result-output"><code>...</code></pre>
+                <h2>Analysis Report</h2>
+                <pre id="result-output" aria-live="polite"><code>Your validation result will appear here.</code></pre>
             </div>
         </main>
 
         <footer>
             <div class="dev-info">
-                <h3 id="dev-toggle">API for Developers &gt;</h3>
+                <h3 id="dev-toggle" role="button" aria-expanded="false">Developer API &gt;</h3>
                 <div id="dev-details" class="hidden">
                     <h4>Validate via API</h4>
                     <p>Send a POST request to <code>/validate-input</code> with a JSON body:</p>

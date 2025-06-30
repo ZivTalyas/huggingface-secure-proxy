@@ -33,10 +33,64 @@ jobs:
           echo "Initial wait for deployment to start..."
           sleep 30
 
-          # Wait for services to be ready (adjust time as needed)
-          timeout=300  # 5 minutes timeout
+          # Check Render deployment status
+          echo "Checking Render deployment status..."
+          frontend_service_id="${{ secrets.RENDER_FRONTEND_SERVICE_ID }}"
+          backend_service_id="${{ secrets.RENDER_BACKEND_SERVICE_ID }}"
+          api_key="${{ secrets.RENDER_API_KEY }}"
+
+          check_deploy_status() {
+            service_id=$1
+            curl -s -H "Authorization: Bearer $api_key" \
+              "https://api.render.com/v1/services/$service_id/deploys" | \
+              jq -r '.[0].status'
+          }
+
+          timeout=600  # 10 minutes timeout
+          
+          until [ $timeout -eq 0 ]; do
+            frontend_status=$(check_deploy_status $frontend_service_id)
+            backend_status=$(check_deploy_status $backend_service_id)
+            
+            echo "Frontend deployment status: $frontend_status"
+            echo "Backend deployment status: $backend_status"
+            
+            if [[ "$frontend_status" == "live" && "$backend_status" == "live" ]]; then
+              echo "✅ Both services are deployed!"
+              break
+            elif [[ "$frontend_status" == "failed" || "$backend_status" == "failed" ]]; then
+              echo "❌ Deployment failed!"
+              exit 1
+            fi
+            
+            sleep 20
+            timeout=$((timeout-20))
+            echo "Remaining timeout: $timeout seconds"
+          done
+
+          if [ $timeout -eq 0 ]; then
+            echo "❌ Deployment timeout reached"
+            exit 1
+          fi
+
+          # Now check if services are responding
+          echo "Checking service health..."
+          timeout=300  # 5 minutes timeout for health check
           frontend_url="${{ secrets.RENDER_FRONTEND_URL }}"
           backend_url="${{ secrets.RENDER_BACKEND_URL }}"
+          
+          # Validate URLs
+          if [[ ! "$frontend_url" =~ ^https?:// ]]; then
+            echo "❌ Invalid frontend URL: $frontend_url"
+            echo "Frontend URL must start with http:// or https://"
+            exit 1
+          fi
+          
+          if [[ ! "$backend_url" =~ ^https?:// ]]; then
+            echo "❌ Invalid backend URL: $backend_url"
+            echo "Backend URL must start with http:// or https://"
+            exit 1
+          fi
           
           echo "Checking frontend URL: $frontend_url"
           echo "Checking backend URL: $backend_url"
@@ -51,14 +105,18 @@ jobs:
               echo "✅ Frontend is ready"
             else
               echo "⏳ Waiting for frontend..."
+              echo "Frontend response:"
+              curl -v "$frontend_url/status" || true
             fi
             
             # Check backend
-            if curl -s "$backend_url/status" | grep -q '"status"'; then
+            if curl -s "$backend_url/health" | grep -q '"status"'; then
               backend_ok=true
               echo "✅ Backend is ready"
             else
               echo "⏳ Waiting for backend..."
+              echo "Backend response:"
+              curl -v "$backend_url/health" || true
             fi
             
             # If both are ready, break the loop
@@ -77,7 +135,7 @@ jobs:
             echo "Frontend status:"
             curl -v "$frontend_url/status" || true
             echo "Backend status:"
-            curl -v "$backend_url/status" || true
+            curl -v "$backend_url/health" || true
             exit 1
           fi
 

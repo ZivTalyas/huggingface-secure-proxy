@@ -1,9 +1,10 @@
 body {
     font-family: 'Roboto', sans-serif;
-    background-color: #f4f7f6;
-    color: #333;
+    background-color: #f8f9fa;
+    background-image: linear-gradient(to right, #eef2f3, #f0f2f5);
+    color: #343a40;
     margin: 0;
-    padding: 20px;
+    padding: 2rem;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -13,112 +14,155 @@ body {
 .container {
     width: 100%;
     max-width: 800px;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    padding: 40px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(149, 157, 165, 0.2);
+    padding: 2.5rem;
     box-sizing: border-box;
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 1.5rem;
+    }
 }
 
 header {
     text-align: center;
-    margin-bottom: 40px;
+    margin-bottom: 2.5rem;
 }
 
 header h1 {
     font-weight: 700;
-    font-size: 2.5em;
+    font-size: 2.8em;
+    background: -webkit-linear-gradient(45deg, #6a11cb, #2575fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     margin: 0;
 }
 
 header p {
-    color: #777;
+    color: #6c757d;
     font-size: 1.1em;
+    margin-top: 0.5rem;
 }
 
 .input-section {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    margin-bottom: 30px;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 textarea#text-input {
     width: 100%;
     min-height: 150px;
-    padding: 15px;
+    padding: 1rem;
     border-radius: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid #ced4da;
     font-family: 'Roboto', sans-serif;
     font-size: 1em;
     resize: vertical;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+textarea#text-input:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
 }
 
 .file-upload {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 1rem;
+    border: 1px dashed #ced4da;
+    padding: 1rem;
+    border-radius: 8px;
+    transition: border-color 0.2s ease;
+}
+
+.file-upload:hover {
+    border-color: #80bdff;
 }
 
 #upload-button {
-    padding: 10px 20px;
-    background-color: #007bff;
+    padding: 0.6rem 1.2rem;
+    background-color: #6c757d;
     color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-weight: bold;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
 }
 
 #upload-button:hover {
-    background-color: #0056b3;
+    background-color: #5a6268;
 }
 
 #file-name {
     font-style: italic;
-    color: #555;
+    color: #6c757d;
+    font-size: 0.9em;
 }
 
 #validate-button {
-    padding: 15px;
-    background-color: #28a745;
+    padding: 0.9rem 1.5rem;
+    background-image: linear-gradient(to right, #2575fc, #6a11cb);
     color: white;
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 1.2em;
-    font-weight: bold;
-    transition: background-color 0.3s;
+    font-size: 1.1em;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+    align-self: flex-end;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 #validate-button:hover {
-    background-color: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .result-section h2 {
-    border-bottom: 2px solid #eee;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 0.8rem;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
 }
 
 #result-output {
-    background-color: #2d2d2d;
-    color: #f4f4f4;
-    padding: 20px;
+    background-color: #e9ecef;
+    color: #212529;
+    padding: 1.5rem;
     border-radius: 8px;
     white-space: pre-wrap;
     word-wrap: break-word;
     font-family: 'Courier New', Courier, monospace;
+    font-size: 0.95em;
+    border: 1px solid #ced4da;
 }
 
 footer {
-    margin-top: 40px;
+    margin-top: 2.5rem;
     text-align: center;
+    color: #6c757d;
 }
 
 .dev-info h3 {
     cursor: pointer;
     color: #007bff;
+    font-weight: 500;
+    display: inline-block;
+    transition: color 0.2s ease;
+}
+
+.dev-info h3:hover {
+    color: #0056b3;
 }
 
 .dev-info .hidden {
@@ -126,9 +170,10 @@ footer {
 }
 
 .dev-info div {
-    margin-top: 15px;
+    margin-top: 1rem;
     text-align: left;
-    background-color: #f9f9f9;
-    padding: 20px;
+    background-color: #f8f9fa;
+    padding: 1.5rem;
     border-radius: 8px;
+    border: 1px solid #dee2e6;
 } 

@@ -14,46 +14,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Backend Wake-up Logic ---
     const wakeUpBackend = async () => {
-        console.log('Attempting to wake up backend...');
         validateButton.disabled = true;
+        console.log('Checking backend status...');
 
-        const maxRetries = 10;
-        let attempt = 0;
-
-        const intervalId = setInterval(async () => {
-            attempt++;
-            if (attempt > maxRetries) {
-                clearInterval(intervalId);
-                statusIndicator.textContent = 'Could not connect to the server. Please try refreshing the page.';
-                statusIndicator.style.color = '#dc3545';
-                return;
-            }
-
+        const performHealthCheck = async () => {
             try {
-                // The BACKEND_URL is now accessed via this special endpoint.
                 const backendUrlResponse = await fetch('/get-backend-url');
+                if (!backendUrlResponse.ok) throw new Error('Failed to get backend URL from frontend server.');
                 const backendUrlData = await backendUrlResponse.json();
                 const backendUrl = backendUrlData.url;
-
-                if (!backendUrl) {
-                    throw new Error("Backend URL not configured.");
-                }
+                if (!backendUrl) throw new Error('Backend URL not configured on frontend server.');
 
                 const response = await fetch(`${backendUrl}/health`);
-                
-                if (response.ok) {
-                    clearInterval(intervalId);
-                    console.log('Backend is awake!');
-                    statusIndicator.classList.add('hidden');
-                    resultOutputContainer.classList.remove('hidden');
-                    validateButton.disabled = false;
-                } else {
-                    console.log(`Backend not ready yet (attempt ${attempt})...`);
-                }
+                return response.ok;
             } catch (error) {
-                console.error(`Wake-up attempt ${attempt} failed:`, error);
+                console.error('Health check failed:', error.message);
+                return false;
             }
-        }, 3000); // Retry every 3 seconds
+        };
+
+        const handleSuccess = () => {
+            statusIndicator.classList.add('hidden');
+            resultOutputContainer.classList.remove('hidden');
+            validateButton.disabled = false;
+        };
+
+        // Perform an initial, immediate check
+        const isAlreadyAwake = await performHealthCheck();
+        if (isAlreadyAwake) {
+            console.log('Backend is already awake!');
+            handleSuccess();
+            return;
+        }
+
+        // If the initial check fails, start polling
+        console.log('Backend not ready. Starting polling...');
+        let retries = 10;
+        const intervalId = setInterval(async () => {
+            if (retries <= 0) {
+                clearInterval(intervalId);
+                statusIndicator.textContent = 'Could not connect to the server. Please try refreshing the page.';
+                statusIndicator.style.color = 'var(--accent-color-dark)';
+                return;
+            }
+            retries--;
+
+            const isAwakeNow = await performHealthCheck();
+            if (isAwakeNow) {
+                clearInterval(intervalId);
+                console.log('Backend has woken up!');
+                handleSuccess();
+            } else {
+                console.log(`Still waiting for backend... ${retries} retries left.`);
+            }
+        }, 3000); // Poll every 3 seconds
     };
     
     // --- Event Listeners ---

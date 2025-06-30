@@ -17,12 +17,14 @@
         <main>
             <div class="input-section">
                 <textarea id="text-input" placeholder="Enter text to validate..." aria-label="Text input for validation"></textarea>
-                <div class="file-upload">
-                    <input type="file" id="file-input" accept=".txt,.pdf" hidden aria-label="File input"/>
-                    <button id="upload-button">Upload File</button>
-                    <span id="file-name">No file selected</span>
+                <div class="actions-wrapper">
+                    <div class="file-upload">
+                        <input type="file" id="file-input" accept=".txt,.pdf" hidden aria-label="File input"/>
+                        <button id="upload-button" class="btn">Upload File</button>
+                        <span id="file-name">No file selected</span>
+                    </div>
+                    <button id="validate-button" class="btn" aria-label="Validate input">Validate</button>
                 </div>
-                <button id="validate-button" aria-label="Validate input">Validate</button>
             </div>
 
             <div class="result-section">

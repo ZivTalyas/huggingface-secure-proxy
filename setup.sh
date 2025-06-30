@@ -36,7 +36,7 @@ chmod +x run.py
 echo -e "${GREEN}Building and starting services...${NC}"
 
 # Use the full path to docker-compose.yml
-DOCKER_COMPOSE_CMD="docker-compose -f docker/docker-compose.yml"
+DOCKER_COMPOSE_CMD="docker-compose -f docker/dev/docker-compose.yml"
 
 # Build services
 echo -e "${YELLOW}Building Docker images...${NC}"

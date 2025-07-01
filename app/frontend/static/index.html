@@ -51,31 +51,23 @@
             <div class="dev-info">
                 <h3 id="dev-toggle" role="button" aria-expanded="false">Developer API &gt;</h3>
                 <div id="dev-details" class="hidden">
-                    <h4>Validate via API</h4>
-                    <p><strong>Backend Endpoint:</strong> <code>POST /validate</code></p>
-                    <h5>1. Validate Text (JSON)</h5>
-                    <pre><code class="language-json">{
-  "text": "Hello, please review this message.",
-  "security_level": "high"
-}</code></pre>
+                    <h4>API Endpoint</h4>
+                    <p><strong>POST /validate-input</strong></p>
 
-                    <h5>2. Validate File (multipart/form-data)</h5>
-                    <pre><code class="language-bash">curl -X POST http://localhost:8001/validate \
+                    <h5>1. Validate Text Only (JSON)</h5>
+                    <pre><code class="language-bash">curl -X POST http://localhost:8000/validate-input \
+  -H "Content-Type: application/json" \
+  -d '{ "text": "Hello Secure World!", "security_level": "high" }'</code></pre>
+
+                    <h5>2. Validate PDF File (multipart/form-data)</h5>
+                    <pre><code class="language-bash">curl -X POST https://safe-input-proxy-frontend.onrender.com/validate-input \
   -F "file=@example.pdf" \
   -F "security_level=high"</code></pre>
 
-                    <hr/>
-                    <p><strong>Frontend Endpoint:</strong> <code>POST /validate-input</code></p>
-                    <h5>a. Validate Text (JSON)</h5>
-                    <pre><code class="language-json">{
-  "text": "Hello from frontend!",
-  "security_level": "medium"
-}</code></pre>
-
-                    <h5>b. Validate File (multipart/form-data)</h5>
-                    <pre><code class="language-bash">curl -X POST http://localhost:8000/validate-input \
+                    <h5>3. Validate Text File (multipart/form-data)</h5>
+                    <pre><code class="language-bash">curl -X POST https://safe-input-proxy-frontend.onrender.com/validate-input \
   -F "file=@example.txt" \
-  -F "security_level=medium"</code></pre>
+  -F "security_level=high"</code></pre>
                 </div>
             </div>
         </footer>

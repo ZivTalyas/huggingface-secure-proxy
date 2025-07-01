@@ -40,6 +40,8 @@ services:
         value: redis
       - key: REDIS_PORT
         value: "6379"
+      - key: GEMINI_API_KEY
+        sync: false
       - key: PYTHONUNBUFFERED
         value: "1"
       - key: PYTHONPATH

@@ -17,7 +17,8 @@ DOCKER_COMPOSE = PROJECT_ROOT / "docker" / "dev" /"docker-compose.yml"
 # Docker Compose command with the correct file path
 def docker_compose_cmd(args: List[str]) -> int:
     """Run a docker compose command with the correct compose file."""
-    cmd = ["docker-compose", "-f", str(DOCKER_COMPOSE)] + args
+    env_file = PROJECT_ROOT / ".env"
+    cmd = ["docker-compose", "-f", str(DOCKER_COMPOSE), "--env-file", str(env_file)] + args
     print(f"Running: {' '.join(cmd)}")
     return subprocess.call(cmd, cwd=PROJECT_ROOT)
 

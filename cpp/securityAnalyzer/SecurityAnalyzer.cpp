@@ -9,8 +9,8 @@
 
 // Regular expressions for PII detection
 const boost::regex email_pattern(R"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})");
-// More strict phone pattern: require at least 10 digits total with proper separators
-const boost::regex phone_pattern(R"((?:\+\d{1,3}[\s\-\.])?(?:\(\d{3}\)[\s\-\.]?|\d{3}[\s\-\.])\d{3}[\s\-\.]\d{4}\b|(?:\+\d{1,3}[\s\-\.])?(?:\d{3}[\s\-\.]\d{3}[\s\-\.]\d{4}|\d{10})\b)");
+// Very strict phone pattern: require clear phone number formatting with proper separators
+const boost::regex phone_pattern(R"(\b(?:\+1[\s\-\.]?)?(?:\([2-9]\d{2}\)[\s\-\.]?|[2-9]\d{2}[\s\-\.])[2-9]\d{2}[\s\-\.]\d{4}\b|\b(?:\+\d{1,3}[\s\-\.])?(?:\d{3}[\s\-\.]\d{3}[\s\-\.]\d{4})\b)");
 const boost::regex ssn_pattern(R"(\b\d{3}-\d{2}-\d{4}\b)");
 
 // Security thresholds
@@ -172,25 +172,18 @@ AnalysisResult SecurityAnalyzer::analyzePDF(const std::vector<uint8_t>& pdf_data
 std::vector<std::string> SecurityAnalyzer::detectPII(const std::string& text) {
     std::vector<std::string> issues;
     
-    // Debug logging - print the text being analyzed (first 200 chars)
-    std::string debug_text = text.length() > 200 ? text.substr(0, 200) + "..." : text;
-    std::cerr << "DEBUG: Analyzing text for PII: \"" << debug_text << "\"" << std::endl;
-    
     boost::smatch email_matches;
     if (boost::regex_search(text, email_matches, email_pattern)) {
-        std::cerr << "DEBUG: Email match found: \"" << email_matches.str() << "\"" << std::endl;
         issues.push_back("Email address detected");
     }
     
     boost::smatch phone_matches;
     if (boost::regex_search(text, phone_matches, phone_pattern)) {
-        std::cerr << "DEBUG: Phone match found: \"" << phone_matches.str() << "\"" << std::endl;
         issues.push_back("Phone number detected");
     }
     
     boost::smatch ssn_matches;
     if (boost::regex_search(text, ssn_matches, ssn_pattern)) {
-        std::cerr << "DEBUG: SSN match found: \"" << ssn_matches.str() << "\"" << std::endl;
         issues.push_back("Social Security Number detected");
     }
     

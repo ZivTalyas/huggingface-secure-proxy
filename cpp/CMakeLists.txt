@@ -17,9 +17,6 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(BUILD_TESTS "Build test executables" ON)
 option(BUILD_PYTHON_BINDINGS "Build Python bindings" ON)
 
-# Add subdirectories
-add_subdirectory(textProcessor)
-
 # Add source files for security analyzer library
 set(SECURITY_ANALYZER_SOURCES
     securityAnalyzer/SecurityAnalyzer.cpp
@@ -43,7 +40,6 @@ target_link_libraries(security_analyzer
     PRIVATE
         Boost::regex
         PkgConfig::POPPLER
-        text_processor
 )
 
 # Python bindings

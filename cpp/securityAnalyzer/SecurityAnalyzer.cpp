@@ -3,7 +3,6 @@
 #include <poppler/cpp/poppler-page.h>
 #include <boost/regex.hpp>
 #include <nlohmann/json.hpp>
-#include "textProcessor/TextProcessor.h"
 #include <memory>
 #include <string>
 
@@ -16,8 +15,28 @@ const boost::regex ssn_pattern(R"(\b\d{3}-\d{2}-\d{4}\b)");
 const double DEFAULT_THRESHOLD = 0.8;
 const int MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+// Constructor
+SecurityAnalyzer::SecurityAnalyzer(double threshold) : threshold_(threshold) {}
+
+void SecurityAnalyzer::setThreshold(double threshold) {
+    threshold_ = threshold;
+}
+
+double SecurityAnalyzer::getThreshold() const {
+    return threshold_;
+}
+
 AnalysisResult SecurityAnalyzer::analyzeText(const std::string& text) {
     AnalysisResult result;
+    
+    // size guard so text files follow same 10 MB limit as PDFs
+    if (text.size() > MAX_FILE_SIZE) {
+        result.is_safe = false;
+        result.confidence_score = 0.0;
+        result.detected_issues.push_back("File size exceeds maximum allowed size");
+        result.analysis_summary = "Text exceeds maximum allowed size";
+        return result;
+    }
     
     // Check for PII
     std::vector<std::string> pii_issues = detectPII(text);
@@ -33,7 +52,7 @@ AnalysisResult SecurityAnalyzer::analyzeText(const std::string& text) {
     
     // Calculate safety score
     result.confidence_score = calculateSafetyScore(text);
-    result.is_safe = result.confidence_score >= DEFAULT_THRESHOLD;
+    result.is_safe = result.confidence_score >= threshold_;
     
     // Generate analysis summary
     result.analysis_summary = std::string("Text analysis completed. ")
@@ -130,7 +149,7 @@ AnalysisResult SecurityAnalyzer::analyzePDF(const std::vector<uint8_t>& pdf_data
             }
         }
         
-        result.is_safe = result.confidence_score >= DEFAULT_THRESHOLD;
+        result.is_safe = result.confidence_score >= threshold_;
         
     } catch (const std::exception& e) {
         result.is_safe = false;
@@ -156,6 +175,11 @@ std::vector<std::string> SecurityAnalyzer::detectPII(const std::string& text) {
     boost::smatch ssn_matches;
     if (boost::regex_search(text, ssn_matches, ssn_pattern)) {
         issues.push_back("Social Security Number detected");
+    }
+    
+    // If any PII issues were found, add a generic flag as well for convenience
+    if (!issues.empty()) {
+        issues.insert(issues.begin(), "PII detected");
     }
     
     return issues;

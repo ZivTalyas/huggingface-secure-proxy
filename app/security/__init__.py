@@ -36,7 +36,7 @@ except Exception as e:
 
 _GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 _GEMINI_ENDPOINT = (
-    "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
     if _GEMINI_API_KEY else None
 )
 
@@ -71,7 +71,7 @@ class SecurityAnalyzer:
 
         self.gemini_api_key = os.getenv("GEMINI_API_KEY")
         self.gemini_endpoint = (
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
             if self.gemini_api_key else None
         )
 

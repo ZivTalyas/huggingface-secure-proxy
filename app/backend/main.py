@@ -279,9 +279,9 @@ async def get_model_info() -> Dict[str, Any]:
                 }
             },
             "llm_services": {
-                "gemini_pro": {
+                "gemini_1_5_flash": {
                     "configured": gemini_configured,
-                    "model": "gemini-pro",
+                    "model": "gemini-1.5-flash",
                     "provider": "Google Generative AI",
                     "description": "Advanced language model for content safety analysis",
                     "status": "configured" if gemini_configured else "not_configured"

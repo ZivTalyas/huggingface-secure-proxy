@@ -38,6 +38,7 @@ services:
       - TOXIC_THRESHOLD=0.7
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app:/app/tests
     volumes:

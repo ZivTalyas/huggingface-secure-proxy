@@ -16,6 +16,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpython3.11-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Install Python build dependencies
+RUN pip3 install --no-cache-dir "pybind11[global]"
+
 # Set up working directory and copy source
 WORKDIR /src
 COPY . .

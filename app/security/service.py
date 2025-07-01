@@ -111,10 +111,19 @@ class SecurityService:
             confidence = analysis.confidence_score
             summary = getattr(analysis, 'analysis_summary', '')
 
+        # Map issue types for backward compatibility
+        mapped_issues = []
+        for issue in detected_issues:
+            if issue == 'harmful_keyword_detected':
+                mapped_issues.append('toxic_language')
+            else:
+                mapped_issues.append(issue)
+
         if detected_issues:
             return {
                 "status": "unsafe",
                 "reason": ", ".join(detected_issues),
+                "detected_issues": mapped_issues,
                 "analysis_summary": summary,
                 "llm_score": confidence if self.config["deep_analysis"] else 1.0,
                 "rule_score": 0.0,
@@ -138,6 +147,7 @@ class SecurityService:
         return {
             "status": "safe" if is_safe else "unsafe",
             "reason": reason,
+            "detected_issues": [],  # Empty list for safe content
             "analysis_summary": summary,
             "llm_score": llm_score,
             "rule_score": rule_score,

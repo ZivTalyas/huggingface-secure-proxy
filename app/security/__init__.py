@@ -9,6 +9,7 @@ from pathlib import Path
 import os
 import json
 import requests
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -76,9 +77,14 @@ class SecurityAnalyzer:
         """Analyzes text using Python-based keyword and LLM checks."""
         issues: List[str] = []
         
-        # Rule-based keyword checks
-        if any(keyword.lower() in text.lower() for keyword in self.harmful_keywords):
-            issues.append('harmful_keyword_detected')
+        # Rule-based keyword checks with word boundaries to avoid false positives
+        text_lower = text.lower()
+        for keyword in self.harmful_keywords:
+            # Use word boundaries to match whole words only
+            pattern = r'\b' + re.escape(keyword.lower()) + r'\b'
+            if re.search(pattern, text_lower):
+                issues.append('harmful_keyword_detected')
+                break  # One match is enough
         
         # LLM-based analysis
         llm_score = 1.0

@@ -55,7 +55,7 @@
                     <p><strong>POST /validate-input</strong></p>
 
                     <h5>1. Validate Text Only (JSON)</h5>
-                    <pre><code class="language-bash">curl -X POST http://localhost:8000/validate-input \
+                    <pre><code class="language-bash">curl -X POST https://safe-input-proxy-frontend.onrender.com/validate-input \
   -H "Content-Type: application/json" \
   -d '{ "text": "Hello Secure World!", "security_level": "high" }'</code></pre>
 

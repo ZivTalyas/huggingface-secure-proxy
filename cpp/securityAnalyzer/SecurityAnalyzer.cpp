@@ -8,8 +8,8 @@
 
 // Regular expressions for PII detection
 const boost::regex email_pattern(R"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})");
-// Require 7–15 digits (E.164 spec), optional leading +, bounded by word boundaries to avoid matching short numbers
-const boost::regex phone_pattern(R"(\b\+?[1-9]\d{6,14}\b)");
+// Require 10–15 digits to minimise false positives
+const boost::regex phone_pattern(R"(\b\+?[1-9]\d{9,14}\b)");
 const boost::regex ssn_pattern(R"(\b\d{3}-\d{2}-\d{4}\b)");
 
 // Security thresholds

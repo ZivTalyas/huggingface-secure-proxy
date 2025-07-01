@@ -242,6 +242,76 @@ async def health_check() -> Dict[str, Any]:
             }
         )
 
+@app.get(
+    "/models",
+    summary="Model Information",
+    description="Get information about the AI models and services being used.",
+    response_model=Dict[str, Any],
+    responses={
+        200: {"description": "Model information retrieved successfully"}
+    }
+)
+async def get_model_info() -> Dict[str, Any]:
+    """Get information about the models and services being used.
+    
+    Returns:
+        dict: Information about the AI models and services
+    """
+    try:
+        # Check if C++ analyzer is available
+        cpp_available = security_service.analyzer.cpp_analyzer is not None
+        
+        # Check if Gemini API is configured
+        gemini_configured = bool(security_service.analyzer.gemini_api_key)
+        
+        model_info = {
+            "service_status": "running",
+            "security_analyzer": {
+                "cpp_analyzer": {
+                    "available": cpp_available,
+                    "description": "C++ Security Analyzer for file analysis and advanced text processing",
+                    "capabilities": ["PDF analysis", "text analysis", "malware detection", "PII detection"]
+                },
+                "python_analyzer": {
+                    "available": True,
+                    "description": "Python-based keyword and pattern matching",
+                    "capabilities": ["keyword filtering", "basic pattern matching"]
+                }
+            },
+            "llm_services": {
+                "gemini_pro": {
+                    "configured": gemini_configured,
+                    "model": "gemini-pro",
+                    "provider": "Google Generative AI",
+                    "description": "Advanced language model for content safety analysis",
+                    "status": "configured" if gemini_configured else "not_configured"
+                }
+            },
+            "security_levels": {
+                "current": SECURITY_LEVEL,
+                "available": ["high", "medium", "low"],
+                "descriptions": {
+                    "high": "Maximum validation (rules + LLM + file analysis)",
+                    "medium": "Balanced performance and protection", 
+                    "low": "Basic validation only"
+                }
+            },
+            "file_support": {
+                "supported_types": ["PDF", "TXT"],
+                "max_file_size": "10MB",
+                "analysis_methods": ["Text extraction", "Malware pattern detection", "PII detection"]
+            }
+        }
+        
+        return model_info
+        
+    except Exception as e:
+        logger.error(f"Error getting model info: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving model information: {str(e)}"
+        )
+
 @app.post(
     "/validate",
     summary="Validate Input",

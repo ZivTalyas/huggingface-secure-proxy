@@ -147,8 +147,17 @@ AnalysisResult SecurityAnalyzer::analyzePDF(const std::vector<uint8_t>& pdf_data
         // Extract text
         std::string text_content = extractTextFromPDF(doc);
         
-        // Analyze extracted text
+        // Debug: Log extracted text content (first 200 chars)
+        std::cout << "DEBUG: Extracted PDF text (first 200 chars): " 
+                  << text_content.substr(0, std::min(200UL, text_content.length())) << std::endl;
+        
+        // Analyze extracted text using the same method as text files
         result = analyzeText(text_content);
+        
+        // Update analysis summary to indicate PDF processing
+        result.analysis_summary = std::string("PDF analysis completed. ") + 
+            (result.is_safe ? "No security issues detected in extracted text." : 
+             "Potential security issues identified in extracted text.");
         
         // Add PDF-specific analysis
         if (result.is_safe) {

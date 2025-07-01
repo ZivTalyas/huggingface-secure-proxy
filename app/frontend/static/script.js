@@ -214,7 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="result-details">
                 ${createScoreBar('Language Model Score', result.llm_score)}
                 ${createScoreBar('Rule-Based Score', result.rule_score)}
-                ${createScoreBar('Overall Risk Score', result.overall_score)}
+                ${createScoreBar('Overall Safety Score', result.overall_score)}
             </div>
         `;
 

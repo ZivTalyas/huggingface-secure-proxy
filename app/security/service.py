@@ -69,11 +69,25 @@ class SecurityService:
             logger.error(f"Error validating file: {e}", exc_info=True)
             return {"status": "error", "reason": "validation_error", "error": str(e)}
 
-    def _process_analysis_results(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_analysis_results(self, analysis: Any) -> Dict[str, Any]:
         """Process the analysis results and calculate scores."""
-        confidence = analysis.get("confidence_score", 1.0)
+        if isinstance(analysis, dict):
+            detected_issues = analysis.get('detected_issues', [])
+            confidence = analysis.get('confidence_score', 1.0)
+        else:
+            detected_issues = analysis.detected_issues
+            confidence = analysis.confidence_score
+
+        if detected_issues:
+            return {
+                "status": "unsafe",
+                "reason": ", ".join(detected_issues),
+                "llm_score": confidence if self.config["deep_analysis"] else 1.0,
+                "rule_score": 0.0,
+                "overall_score": 0.0,
+            }
         
-        rule_score = 1.0 - (len(analysis.get("detected_issues", [])) * 0.2)
+        rule_score = 1.0
         llm_score = confidence if self.config["deep_analysis"] else 1.0
         
         if self.security_level == "high":
@@ -84,10 +98,8 @@ class SecurityService:
             overall_score = rule_score
         
         is_safe = overall_score >= self.config["threshold"]
-        
-        reason = "safe" if is_safe else ", ".join(analysis.get("detected_issues", ["unspecified_issue"]))
-        if not reason:
-             reason = "unspecified_issue"
+
+        reason = "safe" if is_safe else "unspecified_issue"
 
         return {
             "status": "safe" if is_safe else "unsafe",

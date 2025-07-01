@@ -155,6 +155,33 @@ document.addEventListener('DOMContentLoaded', () => {
         analysisResultContainer.innerHTML = ''; // Clear previous results
         analysisResultContainer.classList.remove('hidden');
 
+        // Handle error status (e.g., unsupported file types)
+        if (result.status === 'error') {
+            const errorIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="result-title error"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v2h-2v-2zm0-10h2v8h-2V7z"/></svg>`;
+            
+            let errorMessage = result.reason || 'Unknown error occurred';
+            if (result.reason === 'unsupported_file_type') {
+                errorMessage = 'Unsupported file type. Only PDF and TXT files are supported.';
+            } else if (result.reason === 'file_too_large') {
+                errorMessage = 'File is too large. Maximum size allowed is 10MB.';
+            } else if (result.reason === 'invalid_base64') {
+                errorMessage = 'Invalid file format. Please try uploading the file again.';
+            }
+            
+            const errorHTML = `
+                <div class="result-header">
+                    ${errorIcon}
+                    <div>
+                        <h2 class="result-title error">Error</h2>
+                        <p class="result-reason">${errorMessage}</p>
+                    </div>
+                </div>
+            `;
+            
+            analysisResultContainer.innerHTML = errorHTML;
+            return;
+        }
+
         const isSafe = result.status === 'safe';
         const icon = isSafe 
             ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="result-title safe"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>`

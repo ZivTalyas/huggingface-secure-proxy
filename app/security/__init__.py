@@ -53,7 +53,9 @@ class SecurityAnalyzer:
         """
         # C++ Analyzer
         if _cpp_available:
-            self.cpp_analyzer = CppSecurityAnalyzer(threshold)
+            self.cpp_analyzer = CppSecurityAnalyzer()  # Default threshold
+            if hasattr(self.cpp_analyzer, 'setThreshold'):
+                self.cpp_analyzer.setThreshold(threshold)
         else:
             self.cpp_analyzer = None
 
@@ -139,7 +141,9 @@ class SecurityAnalyzer:
 
             if is_pdf:
                 try:
-                    result: AnalysisResult = self.cpp_analyzer.analyze_pdf(data)
+                    # Convert bytes to list of integers for C++ function
+                    pdf_data_list = list(data)
+                    result: AnalysisResult = self.cpp_analyzer.analyze_pdf(pdf_data_list)
                 except Exception as e:
                     logger.error(f"C++ PDF analysis failed, falling back to text: {e}")
                     text_content = data.decode('utf-8', errors='ignore')

@@ -44,9 +44,9 @@ class ValidationRequest(BaseModel):
     security_level: str = "high"
 
 @app.get("/")
-async def read_index():
-    """Serve the main UI page."""
-    return FileResponse(str(STATIC_DIR / "index.html"))
+async def index():
+    """Serve the main application page."""
+    return FileResponse(STATIC_DIR / "index.html")
 
 @app.get("/get-backend-url")
 async def get_backend_url():
@@ -71,6 +71,35 @@ async def get_status():
             "backend_status": "unavailable",
             "error": str(e)
         }
+
+@app.get("/models")
+async def get_models():
+    """Get information about the AI models being used."""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{BACKEND_URL}/models",
+                timeout=TIMEOUT
+            )
+            
+            if response.status_code != 200:
+                return JSONResponse(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    content={"status": "error", "reason": "Backend model info failed"}
+                )
+                
+            return response.json()
+            
+    except httpx.TimeoutException:
+        return JSONResponse(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            content={"status": "error", "reason": "Backend request timed out"}
+        )
+    except Exception as e:
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"status": "error", "reason": str(e)}
+        )
 
 @app.post("/validate-input")
 async def validate_input(request: ValidationRequest):

@@ -12,5 +12,6 @@
   "boobs", "bugger", "clit", "crap", "dildo", "erection", "fetish", "genital", "incest",
   "masturbate", "nude", "orgasm", "pedophile", "porn", "sadist", "sadism", "vagina",
   "voyeur", "execute", "annihilate", "eradicate", "obliterate", "death", "gore", "bloodshed",
-  "carnage"
+  "carnage", "mkdir(", "system(", "exec(", "shell_exec(", "eval(", "base64_decode", "unlink(",
+  "chmod(", "rmdir(", "symlink(", "proc_open(", "passthru(", "popen("
 ]

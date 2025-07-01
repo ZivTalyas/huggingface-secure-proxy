@@ -234,32 +234,46 @@ textarea#text-input:focus {
 
 /* --- Result & Footer --- */
 .result-section {
-    margin-top: 2rem;
-}
-#analysis-result {
-    background-color: var(--input-bar-color);
-    border-radius: 12px;
-    padding: 1.5rem;
+    background: var(--card-background);
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: var(--card-shadow);
     border: 1px solid var(--border-color);
 }
+
 .result-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
 }
+
 .result-header svg {
-    width: 32px;
-    height: 32px;
+    width: 2.5rem;
+    height: 2.5rem;
     flex-shrink: 0;
+    margin-top: 0.25rem;
 }
+
 .result-title {
     font-size: 1.5rem;
-    font-weight: 600;
-    margin: 0;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-color);
 }
-.result-title.safe { color: #28a745; }
-.result-title.unsafe { color: #dc3545; }
+
+.result-title.safe {
+    color: var(--accent-color);
+}
+
+.result-title.unsafe {
+    color: #ff6b6b;
+}
+
+.result-title.error {
+    color: #ff9500;
+}
+
 .result-reason {
     font-size: 1rem;
     color: var(--text-secondary-color);

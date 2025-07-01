@@ -181,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div>
                     <h2 class="result-title ${result.status}">${isSafe ? 'Analysis Complete: Safe' : 'Analysis Complete: Unsafe'}</h2>
                     <p class="result-reason">Reason: ${result.reason}</p>
+                    ${!isSafe && result.analysis_summary ? `<p class="analysis-summary"><strong>Analysis Summary:</strong> ${result.analysis_summary}</p>` : ''}
                 </div>
             </div>
             <div class="result-details">

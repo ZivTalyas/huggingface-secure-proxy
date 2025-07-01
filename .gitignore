@@ -31,3 +31,7 @@ sample_test_file.txt
 venv/
 .venv/
 .venv/*
+
+
+# test files
+test_files/ 

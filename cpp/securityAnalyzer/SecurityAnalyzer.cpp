@@ -5,10 +5,12 @@
 #include <nlohmann/json.hpp>
 #include <memory>
 #include <string>
+#include <iostream>
 
 // Regular expressions for PII detection
 const boost::regex email_pattern(R"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})");
-const boost::regex phone_pattern(R"(\+?[1-9]\d{1,14})");
+// Very strict phone pattern: require clear phone number formatting with proper separators
+const boost::regex phone_pattern(R"(\b(?:\+1[\s\-\.]?)?(?:\([2-9]\d{2}\)[\s\-\.]?|[2-9]\d{2}[\s\-\.])[2-9]\d{2}[\s\-\.]\d{4}\b|\b(?:\+\d{1,3}[\s\-\.])?(?:\d{3}[\s\-\.]\d{3}[\s\-\.]\d{4})\b)");
 const boost::regex ssn_pattern(R"(\b\d{3}-\d{2}-\d{4}\b)");
 
 // Security thresholds
@@ -133,8 +135,16 @@ AnalysisResult SecurityAnalyzer::analyzePDF(const std::vector<uint8_t>& pdf_data
     }
     
     try {
-        // Load and extract text from PDF
+        // Load PDF
         auto doc = loadPDF(pdf_data);
+
+        if (!doc) {
+            result.is_safe = false;
+            result.detected_issues.push_back("invalid_or_corrupted_pdf");
+            return result;
+        }
+
+        // Extract text
         std::string text_content = extractTextFromPDF(doc);
         
         // Analyze extracted text

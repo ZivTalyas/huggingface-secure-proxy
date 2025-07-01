@@ -9,6 +9,7 @@ from pathlib import Path
 import os
 import json
 import requests
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -76,9 +77,14 @@ class SecurityAnalyzer:
         """Analyzes text using Python-based keyword and LLM checks."""
         issues: List[str] = []
         
-        # Rule-based keyword checks
-        if any(keyword.lower() in text.lower() for keyword in self.harmful_keywords):
-            issues.append('harmful_keyword_detected')
+        # Rule-based keyword checks with word boundaries to avoid false positives
+        text_lower = text.lower()
+        for keyword in self.harmful_keywords:
+            # Use word boundaries to match whole words only
+            pattern = r'\b' + re.escape(keyword.lower()) + r'\b'
+            if re.search(pattern, text_lower):
+                issues.append('harmful_keyword_detected')
+                break  # One match is enough
         
         # LLM-based analysis
         llm_score = 1.0
@@ -124,19 +130,41 @@ class SecurityAnalyzer:
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
         
-        with open(file_path, 'rb') as f:
-            data = f.read()
-        
-        # The C++ module expects bytes and returns an AnalysisResult object
-        result: AnalysisResult = self.cpp_analyzer.analyze_pdf(data)
-        
-        # Convert the C++ result object to a dictionary
-        return {
-            'is_safe': result.is_safe,
-            'confidence_score': result.confidence_score,
-            'detected_issues': list(result.detected_issues),
-            'analysis_summary': result.analysis_summary
-        }
+        try:
+            with open(file_path, 'rb') as f:
+                data = f.read()
+
+            # --- File type detection ---
+            is_pdf = data[:4] == b'%PDF'
+
+            if is_pdf:
+                try:
+                    result: AnalysisResult = self.cpp_analyzer.analyze_pdf(data)
+                except Exception as e:
+                    logger.error(f"C++ PDF analysis failed, falling back to text: {e}")
+                    text_content = data.decode('utf-8', errors='ignore')
+                    result: AnalysisResult = self.cpp_analyzer.analyze_text(text_content)
+            else:
+                # Treat as text (assuming UTF-8 or ASCII). Non-UTF8 bytes are ignored.
+                text_content = data.decode('utf-8', errors='ignore')
+                result: AnalysisResult = self.cpp_analyzer.analyze_text(text_content)
+
+            # Convert the C++ result object to a dictionary
+            return {
+                'is_safe': result.is_safe,
+                'confidence_score': result.confidence_score,
+                'detected_issues': list(result.detected_issues),
+                'analysis_summary': result.analysis_summary
+            }
+
+        except Exception as e:  # Catch C++ or I/O errors
+            logger.error(f"C++ file analysis failed: {e}", exc_info=True)
+            return {
+                'is_safe': False,
+                'confidence_score': 0.0,
+                'detected_issues': ['file_analysis_error'],
+                'analysis_summary': str(e)
+            }
 
     def is_content_safe(self, content: str, threshold: float = 0.8) -> bool:
         """Checks if text content is safe using the Python analyzer."""

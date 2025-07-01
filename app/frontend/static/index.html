@@ -16,7 +16,7 @@
 
         <main>
             <div class="input-section">
-                <textarea id="text-input" placeholder="Enter text to validate or attach a file..." aria-label="Text input for validation"></textarea>
+                <textarea id="text-input" placeholder="Enter text to validate or attach a pdf or txt file..." aria-label="Text input for validation"></textarea>
                 <div class="actions-wrapper">
                     <div class="top-actions">
                         <div class="file-upload">
@@ -51,13 +51,23 @@
             <div class="dev-info">
                 <h3 id="dev-toggle" role="button" aria-expanded="false">Developer API &gt;</h3>
                 <div id="dev-details" class="hidden">
-                    <h4>Validate via API</h4>
-                    <p>Send a POST request to <code>/validate-input</code> with a JSON body:</p>
-                    <pre><code>{
-    "text": "your text here",
-    "file": "base64-encoded-file-content",
-    "security_level": "high"
-}</code></pre>
+                    <h4>API Endpoint</h4>
+                    <p><strong>POST /validate-input</strong></p>
+
+                    <h5>1. Validate Text Only (JSON)</h5>
+                    <pre><code class="language-bash">curl -X POST https://safe-input-proxy-frontend.onrender.com/validate-input \
+  -H "Content-Type: application/json" \
+  -d '{ "text": "Hello Secure World!", "security_level": "high" }'</code></pre>
+
+                    <h5>2. Validate PDF File (multipart/form-data)</h5>
+                    <pre><code class="language-bash">curl -X POST https://safe-input-proxy-frontend.onrender.com/validate-input \
+  -F "file=@example.pdf" \
+  -F "security_level=high"</code></pre>
+
+                    <h5>3. Validate Text File (multipart/form-data)</h5>
+                    <pre><code class="language-bash">curl -X POST https://safe-input-proxy-frontend.onrender.com/validate-input \
+  -F "file=@example.txt" \
+  -F "security_level=high"</code></pre>
                 </div>
             </div>
         </footer>

@@ -66,6 +66,7 @@ class ValidationResult(BaseModel):
     overall_score: Optional[float] = None
     security_level: Optional[str] = None
     error: Optional[str] = None
+    analysis_summary: Optional[str] = None
 
 def load_models():
     """Load ML models and C++ module"""
@@ -279,6 +280,13 @@ async def validate_input(request: ValidationRequest) -> Dict[str, Any]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid security level. Must be one of: high, medium, low"
+            )
+        
+        # Ensure the request is not ambiguous (both text and file supplied)
+        if request.text and request.file:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Provide either 'text' or 'file', not both"
             )
         
         # Process text or file validation

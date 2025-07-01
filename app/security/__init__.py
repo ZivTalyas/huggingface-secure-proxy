@@ -132,7 +132,12 @@ class SecurityAnalyzer:
             is_pdf = data[:4] == b'%PDF'
 
             if is_pdf:
-                result: AnalysisResult = self.cpp_analyzer.analyze_pdf(data)
+                try:
+                    result: AnalysisResult = self.cpp_analyzer.analyze_pdf(data)
+                except Exception as e:
+                    logger.error(f"C++ PDF analysis failed, falling back to text: {e}")
+                    text_content = data.decode('utf-8', errors='ignore')
+                    result: AnalysisResult = self.cpp_analyzer.analyze_text(text_content)
             else:
                 # Treat as text (assuming UTF-8 or ASCII). Non-UTF8 bytes are ignored.
                 text_content = data.decode('utf-8', errors='ignore')

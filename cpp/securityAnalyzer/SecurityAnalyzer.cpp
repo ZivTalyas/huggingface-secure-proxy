@@ -133,8 +133,16 @@ AnalysisResult SecurityAnalyzer::analyzePDF(const std::vector<uint8_t>& pdf_data
     }
     
     try {
-        // Load and extract text from PDF
+        // Load PDF
         auto doc = loadPDF(pdf_data);
+
+        if (!doc) {
+            result.is_safe = false;
+            result.detected_issues.push_back("invalid_or_corrupted_pdf");
+            return result;
+        }
+
+        // Extract text
         std::string text_content = extractTextFromPDF(doc);
         
         // Analyze extracted text

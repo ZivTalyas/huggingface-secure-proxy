@@ -14,7 +14,12 @@ PYBIND11_MODULE(security_analyzer, m) {
         .def_readonly("analysis_summary", &AnalysisResult::analysis_summary);
 
     py::class_<SecurityAnalyzer>(m, "SecurityAnalyzer")
-        .def(py::init<>())
+        .def(py::init<double>(), py::arg("threshold") = 0.8,
+             "Create a SecurityAnalyzer with an optional safety threshold")
+        .def("set_threshold", &SecurityAnalyzer::setThreshold,
+             "Set the safety threshold")
+        .def("get_threshold", &SecurityAnalyzer::getThreshold,
+             "Get the current safety threshold")
         .def("analyze_text", &SecurityAnalyzer::analyzeText, "Analyzes a string of text for security vulnerabilities")
         .def("analyze_pdf", [](SecurityAnalyzer& self, const std::vector<uint8_t>& data) {
             return self.analyzePDF(data);

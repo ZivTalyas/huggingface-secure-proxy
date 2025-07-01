@@ -17,8 +17,11 @@ class SecurityService:
     def __init__(self, security_level: str = "high"):
         """Initialize the security service."""
         self.security_level = security_level.lower()
-        self.analyzer = SecurityAnalyzer()
+        # Configure thresholds first
         self._setup_security_levels()
+
+        # Instantiate analyzer with threshold suited to this security level
+        self.analyzer = SecurityAnalyzer(threshold=self.config["threshold"])
     
     def _setup_security_levels(self) -> None:
         """Configure security parameters based on the security level."""
@@ -54,6 +57,15 @@ class SecurityService:
                 content = base64.b64decode(file_content)
             except Exception:
                 return {"status": "unsafe", "reason": "invalid_base64", "overall_score": 0.0}
+            
+            # --- Early size guard (10 MB) ---
+            MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+            if len(content) > MAX_FILE_SIZE:
+                return {
+                    "status": "unsafe",
+                    "reason": "file_too_large",
+                    "overall_score": 0.0,
+                }
             
             with tempfile.NamedTemporaryFile(delete=False) as temp_file:
                 temp_file.write(content)

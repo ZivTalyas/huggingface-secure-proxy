@@ -44,11 +44,15 @@ class SecurityAnalyzer:
     Provides security analysis for text (Python) and files (C++).
     """
     
-    def __init__(self):
-        """Initializes the SecurityAnalyzer."""
+    def __init__(self, threshold: float = 0.8):
+        """Initializes the SecurityAnalyzer.
+
+        Args:
+            threshold: Safety threshold for the underlying C++ analyzer (if available).
+        """
         # C++ Analyzer
         if _cpp_available:
-            self.cpp_analyzer = CppSecurityAnalyzer()
+            self.cpp_analyzer = CppSecurityAnalyzer(threshold)
         else:
             self.cpp_analyzer = None
 

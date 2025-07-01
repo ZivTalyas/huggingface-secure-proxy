@@ -282,6 +282,13 @@ async def validate_input(request: ValidationRequest) -> Dict[str, Any]:
                 detail="Invalid security level. Must be one of: high, medium, low"
             )
         
+        # Ensure the request is not ambiguous (both text and file supplied)
+        if request.text and request.file:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Provide either 'text' or 'file', not both"
+            )
+        
         # Process text or file validation
         if request.text:
             result = security_service.validate_text(request.text)

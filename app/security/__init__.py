@@ -128,8 +128,15 @@ class SecurityAnalyzer:
             with open(file_path, 'rb') as f:
                 data = f.read()
 
-            # The C++ module expects bytes and returns an AnalysisResult object
-            result: AnalysisResult = self.cpp_analyzer.analyze_pdf(data)
+            # --- File type detection ---
+            is_pdf = data[:4] == b'%PDF'
+
+            if is_pdf:
+                result: AnalysisResult = self.cpp_analyzer.analyze_pdf(data)
+            else:
+                # Treat as text (assuming UTF-8 or ASCII). Non-UTF8 bytes are ignored.
+                text_content = data.decode('utf-8', errors='ignore')
+                result: AnalysisResult = self.cpp_analyzer.analyze_text(text_content)
 
             # Convert the C++ result object to a dictionary
             return {

@@ -67,7 +67,26 @@ class SecurityService:
                     "overall_score": 0.0,
                 }
             
-            with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            # --- Determine file type (PDF or Text) ---
+            is_pdf = content[:4] == b"%PDF"
+            is_text = False
+            if not is_pdf:
+                try:
+                    sample = content[:1024].decode("utf-8", errors="ignore")
+                    printable_chars = sum(c.isprintable() or c.isspace() for c in sample)
+                    if sample and printable_chars / len(sample) > 0.85:
+                        is_text = True
+                except Exception:
+                    is_text = False
+
+            if not (is_pdf or is_text):
+                return {
+                    "status": "error",
+                    "reason": "unsupported_file_type",
+                    "overall_score": 0.0,
+                }
+            
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf' if is_pdf else '.txt') as temp_file:
                 temp_file.write(content)
                 temp_path = temp_file.name
             

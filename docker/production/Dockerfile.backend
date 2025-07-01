@@ -48,9 +48,9 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY app /app/app
-COPY run.py .
+# Copy application code from the builder stage
+COPY --from=builder /src/app /app
+COPY --from=builder /src/run.py .
 
 # Set environment variables (can be overridden)
 ENV BACKEND_HOST=0.0.0.0 \
@@ -61,4 +61,4 @@ ENV BACKEND_HOST=0.0.0.0 \
 EXPOSE 10000
 
 # Start the application
-CMD ["uvicorn", "app.backend.main:app", "--host", "0.0.0.0", "--port", "10000"]
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "10000"]

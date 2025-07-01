@@ -66,6 +66,7 @@ class ValidationResult(BaseModel):
     overall_score: Optional[float] = None
     security_level: Optional[str] = None
     error: Optional[str] = None
+    analysis_summary: Optional[str] = None
 
 def load_models():
     """Load ML models and C++ module"""

@@ -124,19 +124,29 @@ class SecurityAnalyzer:
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
         
-        with open(file_path, 'rb') as f:
-            data = f.read()
-        
-        # The C++ module expects bytes and returns an AnalysisResult object
-        result: AnalysisResult = self.cpp_analyzer.analyze_pdf(data)
-        
-        # Convert the C++ result object to a dictionary
-        return {
-            'is_safe': result.is_safe,
-            'confidence_score': result.confidence_score,
-            'detected_issues': list(result.detected_issues),
-            'analysis_summary': result.analysis_summary
-        }
+        try:
+            with open(file_path, 'rb') as f:
+                data = f.read()
+
+            # The C++ module expects bytes and returns an AnalysisResult object
+            result: AnalysisResult = self.cpp_analyzer.analyze_pdf(data)
+
+            # Convert the C++ result object to a dictionary
+            return {
+                'is_safe': result.is_safe,
+                'confidence_score': result.confidence_score,
+                'detected_issues': list(result.detected_issues),
+                'analysis_summary': result.analysis_summary
+            }
+
+        except Exception as e:  # Catch C++ or I/O errors
+            logger.error(f"C++ file analysis failed: {e}", exc_info=True)
+            return {
+                'is_safe': False,
+                'confidence_score': 0.0,
+                'detected_issues': ['file_analysis_error'],
+                'analysis_summary': str(e)
+            }
 
     def is_content_safe(self, content: str, threshold: float = 0.8) -> bool:
         """Checks if text content is safe using the Python analyzer."""

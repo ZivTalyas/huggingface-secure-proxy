@@ -86,14 +86,17 @@ class SecurityService:
         if isinstance(analysis, dict):
             detected_issues = analysis.get('detected_issues', [])
             confidence = analysis.get('confidence_score', 1.0)
+            summary = analysis.get('analysis_summary', '')
         else:
             detected_issues = analysis.detected_issues
             confidence = analysis.confidence_score
+            summary = getattr(analysis, 'analysis_summary', '')
 
         if detected_issues:
             return {
                 "status": "unsafe",
                 "reason": ", ".join(detected_issues),
+                "analysis_summary": summary,
                 "llm_score": confidence if self.config["deep_analysis"] else 1.0,
                 "rule_score": 0.0,
                 "overall_score": 0.0,
@@ -116,6 +119,7 @@ class SecurityService:
         return {
             "status": "safe" if is_safe else "unsafe",
             "reason": reason,
+            "analysis_summary": summary,
             "llm_score": llm_score,
             "rule_score": rule_score,
             "overall_score": overall_score,

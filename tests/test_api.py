@@ -5,7 +5,7 @@ import base64
 import requests
 
 # Base URL of the running proxy (can be overridden when executing tests)
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8001")
+BASE_URL = os.getenv("BACKEND_URL", "http://localhost:8001")
 
 class TestSecureInputProxy(unittest.TestCase):
     def run(self, result=None):
@@ -27,7 +27,7 @@ class TestSecureInputProxy(unittest.TestCase):
 
         # Skip all tests if server not running
         try:
-            requests.get(f"{self.base_url}/status", timeout=2)
+            requests.get(f"{self.base_url}/health", timeout=2)
         except requests.RequestException:
             raise unittest.SkipTest(f"API server not reachable at {self.base_url}; start the stack before running these tests.")
 
@@ -39,13 +39,13 @@ class TestSecureInputProxy(unittest.TestCase):
 
     def test_frontend_health(self):
         """Test frontend health check endpoint"""
-        response = requests.get(f"{self.base_url}/status", timeout=5)
+        response = requests.get(f"{self.base_url}/health", timeout=5)
         self.assertEqual(response.status_code, 200)
         self.assertIn("status", response.json())
 
     def test_validate_safe_text(self):
         """Test validation of safe text input"""
-        response = requests.post(f"{self.base_url}/validate-input",
+        response = requests.post(f"{self.base_url}/validate",
             json={"text": self.safe_text, "security_level": "high"}
         )
         self.assertEqual(response.status_code, 200)
@@ -54,7 +54,7 @@ class TestSecureInputProxy(unittest.TestCase):
     
     def test_validate_unsafe_text(self):
         """Test validation of unsafe text input"""
-        response = requests.post(f"{self.base_url}/validate-input",
+        response = requests.post(f"{self.base_url}/validate",
             json={"text": self.unsafe_text, "security_level": "high"}
         )
         self.assertEqual(response.status_code, 200)
@@ -69,7 +69,7 @@ class TestSecureInputProxy(unittest.TestCase):
         with open(sample_txt_path, "rb") as f:
             files = {"file": (sample_txt_path, f, "text/plain")}
             data = {"security_level": "high"}
-            response = requests.post(f"{self.base_url}/validate-input", data=data, files=files)
+            response = requests.post(f"{self.base_url}/validate", data=data, files=files)
         os.remove(sample_txt_path)
         self.assertEqual(response.status_code, 200)
         result = response.json()
@@ -83,7 +83,7 @@ class TestSecureInputProxy(unittest.TestCase):
         with open(sample_pdf_path, "rb") as f:
             files = {"file": (sample_pdf_path, f, "application/pdf")}
             data = {"security_level": "high"}
-            response = requests.post(f"{self.base_url}/validate-input", data=data, files=files)
+            response = requests.post(f"{self.base_url}/validate", data=data, files=files)
         os.remove(sample_pdf_path)
         self.assertEqual(response.status_code, 200)
         result = response.json()
@@ -91,14 +91,14 @@ class TestSecureInputProxy(unittest.TestCase):
     
     def test_invalid_security_level(self):
         """Test validation with invalid security level"""
-        response = requests.post(f"{self.base_url}/validate-input",
+        response = requests.post(f"{self.base_url}/validate",
             json={"text": self.safe_text, "security_level": "invalid"}
         )
         self.assertEqual(response.status_code, 400)
     
     def test_missing_input(self):
         """Test validation with missing input"""
-        response = requests.post(f"{self.base_url}/validate-input",
+        response = requests.post(f"{self.base_url}/validate",
             json={"security_level": "high"}
         )
         self.assertEqual(response.status_code, 400)
@@ -106,7 +106,7 @@ class TestSecureInputProxy(unittest.TestCase):
     def test_harmful_keyword(self):
         """Text containing a known harmful keyword should be unsafe"""
         toxic = "You are a stupid hacker."
-        r = requests.post(f"{self.base_url}/validate-input",
+        r = requests.post(f"{self.base_url}/validate",
                           json={"text": toxic, "security_level": "high"})
         self.assertEqual(r.status_code, 200)
         data = r.json()

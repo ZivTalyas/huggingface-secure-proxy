@@ -52,12 +52,30 @@
                 <h3 id="dev-toggle" role="button" aria-expanded="false">Developer API &gt;</h3>
                 <div id="dev-details" class="hidden">
                     <h4>Validate via API</h4>
-                    <p>Send a POST request to <code>/validate-input</code> with a JSON body:</p>
-                    <pre><code>{
-    "text": "your text here",
-    "file": "base64-encoded-file-content",
-    "security_level": "high"
+                    <p><strong>Backend Endpoint:</strong> <code>POST /validate</code></p>
+                    <h5>1. Validate Text (JSON)</h5>
+                    <pre><code class="language-json">{
+  "text": "Hello, please review this message.",
+  "security_level": "high"
 }</code></pre>
+
+                    <h5>2. Validate File (multipart/form-data)</h5>
+                    <pre><code class="language-bash">curl -X POST http://localhost:8001/validate \
+  -F "file=@example.pdf" \
+  -F "security_level=high"</code></pre>
+
+                    <hr/>
+                    <p><strong>Frontend Endpoint:</strong> <code>POST /validate-input</code></p>
+                    <h5>a. Validate Text (JSON)</h5>
+                    <pre><code class="language-json">{
+  "text": "Hello from frontend!",
+  "security_level": "medium"
+}</code></pre>
+
+                    <h5>b. Validate File (multipart/form-data)</h5>
+                    <pre><code class="language-bash">curl -X POST http://localhost:8000/validate-input \
+  -F "file=@example.txt" \
+  -F "security_level=medium"</code></pre>
                 </div>
             </div>
         </footer>

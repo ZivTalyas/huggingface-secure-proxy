@@ -5,6 +5,18 @@
 A secure input validation proxy designed to protect NLP/ML models and applications from malicious or harmful content. It analyzes text and file inputs using a combination of rule-based filtering, keyword detection, and performance-optimized C++ security analysis.
 
 ---
+## 🎬 Demo
+
+*[GIF placeholder - user will add demo GIF here]*
+
+### Key Features Demonstrated:
+- **Real-time Text Validation**: Instant feedback on text input safety
+- **File Upload Security**: Secure processing of PDF and TXT files
+- **Configurable Security Levels**: High, Medium, Low protection modes
+- **Detailed Analysis Results**: Comprehensive security scoring and issue detection
+- **Modern Web Interface**: Clean, responsive design for easy testing
+
+---
 
 ## 🌐 [Try the Live Application!](https://safe-input-proxy-frontend.onrender.com)
 
@@ -34,19 +46,6 @@ In today's AI-driven world, protecting your applications from harmful, malicious
 - **Protects Model Performance**: Prevents adversarial inputs that could compromise ML model behavior
 
 Perfect for chatbots, content moderation systems, document processing pipelines, and any application that processes user-generated content.
-
----
-
-## 🎬 Demo
-
-*[GIF placeholder - user will add demo GIF here]*
-
-### Key Features Demonstrated:
-- **Real-time Text Validation**: Instant feedback on text input safety
-- **File Upload Security**: Secure processing of PDF and TXT files
-- **Configurable Security Levels**: High, Medium, Low protection modes
-- **Detailed Analysis Results**: Comprehensive security scoring and issue detection
-- **Modern Web Interface**: Clean, responsive design for easy testing
 
 ---
 

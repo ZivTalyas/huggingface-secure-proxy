@@ -1,16 +1,28 @@
-# Secure Input Validation Proxy
+# Secure Input Proxy
 
 [![Production is Live](https://img.shields.io/badge/Production-Live-brightgreen?logo=render&style=for-the-badge)](https://safe-input-proxy-frontend.onrender.com)
 
-A secure input validation proxy designed to sit between users/chatbots and NLP/ML models. It ensures that only validated, safe text or file inputs are allowed to proceed into processing, protecting your system from malicious or harmful content.
+A secure input validation proxy designed to protect NLP/ML models and applications from malicious or harmful content. It analyzes text and file inputs using a combination of rule-based filtering, keyword detection, and performance-optimized C++ security analysis.
+
+---
+## 🎬 Demo
+
+![Demo](demo/demo.gif)
+
+### Key Features Demonstrated:
+- **Real-time Text Validation**: Instant feedback on text input safety
+- **File Upload Security**: Secure processing of PDF and TXT files
+- **Configurable Security Levels**: High, Medium, Low protection modes
+- **Detailed Analysis Results**: Comprehensive security scoring and issue detection
+- **Modern Web Interface**: Clean, responsive design for easy testing
 
 ---
 
-## 🌐 [Click here to try the Live Application!](https://safe-input-proxy-frontend.onrender.com)
+## 🌐 [Try the Live Application!](https://safe-input-proxy-frontend.onrender.com)
 
 [![Open in Production](https://img.shields.io/badge/Open%20App-Frontend-blue?logo=render&style=for-the-badge)](https://safe-input-proxy-frontend.onrender.com)
 
-The application now features a modern, user-friendly interface for validating text and files (`.txt`, `.pdf`).
+> ⏳ **Note**: The app may take up to 15 seconds to load initially due to free tier hosting cold starts.
 
 ---
 
@@ -23,297 +35,212 @@ The application now features a modern, user-friendly interface for validating te
 
 ---
 
-## 🚀 Features
+## 🤔 Why This App?
 
-### Security Features
+In today's AI-driven world, protecting your applications from harmful, malicious, or inappropriate content is critical. This proxy acts as a security gateway that:
 
-- **Input Validation**
-  - Rule-based validation
-  - ML-based content analysis
-  - File content inspection (PDF, TXT)
-  - Configurable security levels (high/medium/low)
+- **Prevents Injection Attacks**: Filters SQL injection, XSS, and other code injection attempts
+- **Blocks Harmful Content**: Identifies toxic language, hate speech, and inappropriate material
+- **Validates File Uploads**: Safely processes PDF and text files before they reach your models
+- **Ensures Compliance**: Helps maintain content standards for user-facing AI applications
+- **Protects Model Performance**: Prevents adversarial inputs that could compromise ML model behavior
 
-- **Architecture**
-  - Microservices design
-  - Frontend/Backend separation
-  - Crash isolation
-  - Graceful degradation
+Perfect for chatbots, content moderation systems, document processing pipelines, and any application that processes user-generated content.
 
-### Development & Operations
+---
 
-- **Containerized**
-  - Docker support out of the box
-  - Development and production configurations
-  - Easy scaling
-  - Built-in health checks
-  - Monitoring with Prometheus & Grafana
+## 🚀 How to Use the App
 
-- **Developer Friendly**
-  - Simple REST API
-  - Comprehensive documentation
-  - One-line setup script
-  - Automated health checks
-  - Built-in management script (`run.py`)
+### Web Interface
 
-### Performance
+1. **Visit the Live App**: Go to [safe-input-proxy-frontend.onrender.com](https://safe-input-proxy-frontend.onrender.com)
 
-- **Optimized**
-  - C++ core for performance-critical operations
-  - Redis caching layer
-  - Asynchronous processing
+2. **Choose Input Method**:
+   - **Text Input**: Type or paste text directly into the textarea
+   - **File Upload**: Click "Attach File" to upload PDF or TXT files
 
-## 🏗 Architecture
+3. **Select Security Level**:
+   - **High**: Maximum protection (rule-based + ML analysis + deep file inspection)
+   - **Medium**: Balanced performance and security
+   - **Low**: Basic rule-based validation only
 
-The system is designed with a microservices architecture using Docker containers:
+4. **Validate**: Click the "Validate" button to analyze your input
 
-### Services
+5. **Review Results**: Get detailed feedback including:
+   - Safety status (Safe/Unsafe/Error)
+   - Confidence scores
+   - Detected issues
+   - Analysis summary
 
-1. **Frontend API** (`app/frontend/`)
-   - Handles HTTP requests and API endpoints
-   - Provides resilience against backend failures
-   - Runs on port 8000
+### API Usage
 
-2. **Backend Service** (`app/backend/`)
-   - Performs intensive validation and processing
-   - Runs ML models and security checks
-   - Handles file processing
-   - Runs on port 8001
-
-3. **Redis**
-   - Used for caching and rate limiting
-   - Runs on port 6379
-
-### Directory Structure
-
-```
-.
-├── app/                    # Application code
-│   ├── backend/            # Backend service
-│   ├── frontend/           # Frontend API
-│   └── security/           # Security module with C++ bindings
-├── cpp/                    # C++ security analyzer
-│   ├── bindings/           # Python bindings for C++
-│   ├── mlInterface/        # ML interface code
-│   └── securityAnalyzer/    # Core security analysis
-├── docker/                 # Docker configuration
-│   ├── dev/                # Development Docker setup
-│   └── production/         # Production Docker setup
-├── tests/                  # Test files
-├── .env.example           # Example environment variables
-├── docker-compose.yml      # Main Docker Compose file
-└── run.py                 # Management script
-```
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Docker 20.10+
-- Docker Compose 2.0+
-- (For development) Python 3.8+, CMake, and build tools
-
-### Quick Start with Docker
-
-#### Option 1: Using the setup script (recommended)
-
-1. Make the setup script executable:
-   ```bash
-   chmod +x setup.sh
-   ```
-
-2. Run the setup script:
-   ```bash
-   ./setup.sh
-   ```
-
-   This will:
-   - Create a `.env` file from the example if it doesn't exist
-   - Check for Docker and Docker Compose
-   - Build and start all services
-   - Provide you with the service URLs
-
-#### Option 2: Manual setup
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/secure-input-proxy.git
-   cd secure-input-proxy
-   ```
-
-2. Copy the example environment file and configure it:
-   ```bash
-   cp .env.example .env
-   # Edit .env file with your configuration
-   ```
-
-3. Build and start the services:
-   ```bash
-   # Build and start all services in detached mode
-   ./run.py start --build
-   
-   # Or build and start in one command
-   docker-compose -f docker/docker-compose.yml up --build -d
-   ```
-
-4. Access the services:
-   - Frontend API: http://localhost:8000
-   - Backend API: http://localhost:8001
-   - Redis: localhost:6379
-
-### Development Setup
-
-The `run.py` script provides a convenient way to manage the application:
-
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Set up environment variables:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
-
-5. Build the C++ module:
-   ```bash
-   mkdir -p cpp/build
-   cd cpp/build
-   cmake ..
-
-### Running the Application
-
-Start both frontend and backend servers:
-
+#### Validate Text
 ```bash
-python run.py
+curl -X POST https://safe-input-proxy-frontend.onrender.com/validate-input \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Hello, this is a test message",
+    "security_level": "high"
+  }'
 ```
 
-Or start them separately:
-
+#### Validate File (Base64 encoded)
 ```bash
-# In separate terminals
-uvicorn app.frontend.main:app --reload --port 8000
-uvicorn app.backend.main:app --reload --port 8001
+curl -X POST https://safe-input-proxy-frontend.onrender.com/validate-input \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file": "base64-encoded-file-content",
+    "security_level": "high"
+  }'
 ```
 
-## 🛠 Management Script
-
-The `run.py` script provides a convenient way to manage the application:
-
-```bash
-# Start all services (in background)
-./run.py start
-
-# Build and start services
-./run.py start --build
-
-# Stop all services
-./run.py stop
-
-# Restart services
-./run.py restart
-
-# View logs (all services or specific service)
-./run.py logs
-./run.py logs frontend
-
-# Build services without starting
-./run.py build
-```
-
-## ✅ Health Checks
-
-Check the status of all services with the health check script:
-
-```bash
-./healthcheck.sh
-```
-
-Example output:
-```
-🔍 Running health checks...
-
-Checking Docker... ✓ RUNNING
-Checking Docker Compose... ✓ RUNNING
-Checking Redis... ✓ RUNNING
-Checking Backend API... ✓ RUNNING
-Checking Frontend API... ✓ RUNNING
-
-📊 Service Status:
-Frontend API: http://localhost:8000/status
-Backend API:  http://localhost:8001/health
-Redis:        localhost:6379
-Prometheus:   http://localhost:9090
-Grafana:      http://localhost:3000
-
-✅ Health check completed!
-```
-
-## 📚 API Documentation
-
-### Frontend API (Port 8000)
-
-```http
-POST /validate-input
-Content-Type: application/json
-
-{
-  "text": "example user input",  // Optional (one of text or file is required)
-  "file": "base64-encoded-content", // Optional
-  "security_level": "high" | "medium" | "low"
-}
-```
-
-**Example Response:**
-
+#### Response Format
 ```json
 {
   "status": "safe",
   "reason": "safe",
-  "llm_score": 0.12,
-  "rule_score": 0.15,
-  "overall_score": 0.13,
-  "processing_time_ms": 42.5
+  "llm_score": 0.85,
+  "rule_score": 0.92,
+  "overall_score": 0.88,
+  "detected_issues": [],
+  "analysis_summary": "Content passed all security checks",
+  "processing_time_ms": 45.2
 }
 ```
 
-### Check Status
+### Local Development Setup
 
-```http
-GET /status
-```
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/zivtalyas/safe-input-proxy.git
+   cd safe-input-proxy
+   ```
 
-**Example Response:**
+2. **Quick start with Docker**:
+   ```bash
+   # Make setup script executable
+   chmod +x setup.sh
+   
+   # Run automated setup
+   ./setup.sh
+   ```
 
-```json
-{
-  "status": "available",
-  "backend_status": "healthy"
-}
-```
+3. **Manual Docker setup**:
+   ```bash
+   # Copy environment variables
+   cp .env.example .env
+   
+   # Build and start services
+   docker-compose -f docker/dev/docker-compose.yml up --build
+   ```
 
-## 🛡 Security Levels
+4. **Access the application**:
+   - Frontend: http://localhost:8000
+   - Backend API: http://localhost:8001
+   - Redis: localhost:6379
 
-| Level  | Description |
-|--------|-------------|
-| high   | Maximum validation (rules + LLM + file analysis) |
-| medium | Balanced performance and protection |
-| low    | Basic validation only |
+---
 
-## 🐳 Docker Deployment
+## ⚡ Technical Choices & Architecture
 
-Build and run with Docker Compose:
+### Framework & Language Stack
+- **FastAPI**: Modern Python web framework for both frontend and backend APIs
+  - Automatic API documentation with OpenAPI/Swagger
+  - High performance with async/await support
+  - Built-in data validation with Pydantic models
+  - Excellent for microservices architecture
 
+- **Python 3.8+**: Primary development language
+  - Rich ecosystem for security and ML libraries
+  - Easy integration with C++ modules
+  - Strong community support
+
+### Performance & Core Processing
+- **C++ Security Analyzer**: Performance-critical security analysis
+  - Custom-built security analyzer in C++ for speed
+  - Python bindings for seamless integration
+  - Handles intensive text processing and pattern matching
+  - PDF processing capabilities with Poppler library
+
+### Architecture Pattern
+- **Microservices Architecture**: Separated concerns for scalability
+  - **Frontend Service** (Port 8000): HTTP API, static file serving, request routing
+  - **Backend Service** (Port 8001): Heavy security analysis, ML processing
+  - **Redis**: Caching layer and potential rate limiting
+  
+- **Benefits**:
+  - Crash isolation (frontend stays up if backend fails)
+  - Independent scaling of services
+  - Easier maintenance and deployment
+
+### Containerization & Deployment
+- **Docker & Docker Compose**: Complete containerization
+  - Multi-service orchestration
+  - Development and production configurations
+  - Consistent environments across deployments
+  - Easy scaling and load balancing
+
+- **Render Platform**: Production hosting
+  - Free tier deployment
+  - Automatic deployments from GitHub
+  - Built-in SSL and CDN
+  - Container registry integration (GHCR)
+
+### CI/CD Pipeline
+- **GitHub Actions**: Automated workflows
+  - Docker image building and publishing
+  - Automated testing on cloud infrastructure
+  - Container registry management
+  - Deploy on commit triggers
+
+### Security Implementation
+- **Multi-layered Security Approach**:
+  - **Rule-based Filtering**: Harmful keywords detection (100+ patterns)
+  - **Pattern Matching**: SQL injection, XSS, code injection detection
+  - **File Analysis**: Safe PDF and text file processing
+  - **Configurable Thresholds**: Adjustable security levels
+
+- **Security Features**:
+  - Input sanitization and validation
+  - File type verification
+  - Size limits (10MB max)
+  - Base64 encoding for safe file transfer
+  - Temporary file handling with cleanup
+
+### Data & Caching
+- **Redis**: In-memory data structure store
+  - Response caching for improved performance
+  - Session management capabilities
+  - Rate limiting implementation ready
+  - Pub/sub for service communication
+
+### Development Tools
+- **Environment Management**: `.env` files for configuration
+- **Health Checks**: Built-in service monitoring
+- **Logging**: Comprehensive logging across services
+- **Hot Reloading**: Development-friendly auto-restart
+
+### Why These Choices?
+
+1. **FastAPI**: Chosen for its modern async capabilities, automatic documentation, and excellent performance
+2. **Microservices**: Allows independent scaling and better fault tolerance
+3. **C++**: Critical for performance in security analysis - significantly faster than pure Python
+4. **Docker**: Ensures consistent deployment across environments and simplifies scaling
+5. **Redis**: Provides fast caching and potential for advanced features like rate limiting
+6. **Render**: Free, reliable hosting with good CI/CD integration for open source projects
+
+This architecture provides a robust, scalable, and maintainable solution for secure input validation while maintaining excellent performance and developer experience.
+
+---
+
+## 📊 Service Health
+
+Check all services status:
 ```bash
-docker-compose up --build
+./healthcheck.sh
 ```
+
+---
 
 ## 🤝 Contributing
 
@@ -322,6 +249,8 @@ docker-compose up --build
 3. Commit your changes (`git commit -m 'Add some amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
+
+---
 
 ## 📄 License
 

@@ -75,9 +75,171 @@ class SecurityAnalyzer:
             if self.gemini_api_key else None
         )
 
+    def detect_code_injection(self, text: str) -> List[str]:
+        """Detect various types of code injection attempts."""
+        issues = []
+        text_lower = text.lower()
+        
+        # SQL Injection patterns (comprehensive)
+        sql_patterns = [
+            "' or '", "' or 1=1", "' or 1=1--", "' or '1'='1", "' or \"1\"=\"1",
+            "' union select", "union all select", "' having '", "' group by '",
+            "' order by ", "' drop table", "'; drop table", "' delete from", "' insert into",
+            "' update ", "' alter table", "' create table", "' truncate ",
+            "'; exec", "'; execute", "xp_cmdshell", "sp_executesql",
+            "benchmark(", "sleep(", "waitfor delay", "pg_sleep(",
+            "extractvalue(", "updatexml(", "load_file(", "into outfile",
+            "information_schema", "mysql.user", "sysobjects", "syscolumns"
+        ]
+        
+        for pattern in sql_patterns:
+            if pattern in text_lower:
+                issues.append("Potential SQL injection attempt detected")
+                break
+        
+        # XSS/JavaScript injection patterns (comprehensive)
+        xss_patterns = [
+            "<script", "</script>", "javascript:", "vbscript:", "onload=", "onerror=",
+            "onclick=", "onmouseover=", "onfocus=", "onblur=", "onchange=",
+            "onsubmit=", "onreset=", "onkeydown=", "onkeyup=", "onkeypress=",
+            "document.cookie", "document.write", "window.location", "eval(",
+            "settimeout(", "setinterval(", "innerhtml=", "outerhtml=",
+            "document.getelementbyid", "alert(", "confirm(", "prompt(",
+            "fromcharcode(", "unescape(", "string.fromcharcode"
+        ]
+        
+        for pattern in xss_patterns:
+            if pattern in text_lower:
+                issues.append("Potential XSS attack detected")
+                break
+        
+        # Command injection patterns (comprehensive)
+        cmd_patterns = [
+            "; rm -rf", "; del ", "& echo", "| nc ", "| netcat", "; wget",
+            "; curl", "; cat /etc/passwd", "; cat /etc/shadow", "$(", "`",
+            "; ls -la", "; dir", "; whoami", "; id", "; uname", "; ps aux",
+            "; netstat", "; ifconfig", "; ping", "; nslookup", "; dig",
+            "; chmod +x", "; ./", "&&", "||", "; sh", "; bash", "; cmd",
+            "; powershell", "& type", "& copy", "& move", "& ren"
+        ]
+        
+        for pattern in cmd_patterns:
+            if pattern in text_lower:
+                issues.append("Potential command injection attempt detected")
+                break
+        
+        # NoSQL injection patterns
+        nosql_patterns = [
+            "$where", "$ne", "$in", "$nin", "$regex", "$exists", "$elemmatch",
+            "$gt", "$gte", "$lt", "$lte", "$or", "$and", "$not", "$nor",
+            "this.password", "this.username", "db.eval", "mapreduce",
+            "return true", "return false", "; return ", "var x=", "var y="
+        ]
+        
+        for pattern in nosql_patterns:
+            if pattern in text_lower:
+                issues.append("Potential NoSQL injection attempt detected")
+                break
+        
+        # LDAP injection patterns
+        ldap_patterns = [
+            ")(cn=*", ")(uid=*", ")(mail=*", ")(&", ")(|", "*)(uid=*",
+            "*)(cn=*", "admin*", "*admin", ")(objectclass=*"
+        ]
+        
+        for pattern in ldap_patterns:
+            if pattern in text_lower:
+                issues.append("Potential LDAP injection attempt detected")
+                break
+        
+        # Path traversal patterns
+        path_patterns = [
+            "../", "..\\", "%2e%2e%2f", "%2e%2e%5c", "....//", "....\\\\",
+            "/etc/passwd", "/etc/shadow", "/etc/hosts", "c:\\windows\\system32",
+            "boot.ini", "web.config", ".env", ".htaccess", "/proc/self/environ"
+        ]
+        
+        for pattern in path_patterns:
+            if pattern in text_lower:
+                issues.append("Potential path traversal attempt detected")
+                break
+        
+        # XML/XXE injection patterns
+        xml_patterns = [
+            "<!entity", "<!doctype", "system \"file://", "system \"http://",
+            "system \"ftp://", "%xxe;", "&xxe;", "xml version=", "<?xml"
+        ]
+        
+        for pattern in xml_patterns:
+            if pattern in text_lower:
+                issues.append("Potential XML/XXE injection attempt detected")
+                break
+        
+        # Template injection patterns (case-sensitive for some)
+        template_patterns = [
+            "{{", "}}", "${", "#{", "<%", "%>", "@{", "[[", "]]",
+            "__import__", "getattr(", "setattr(", "__builtins__",
+            "exec(", "eval(", "compile(", "__globals__"
+        ]
+        
+        for pattern in template_patterns:
+            if pattern in text:  # Case-sensitive check for template patterns
+                issues.append("Potential template injection attempt detected")
+                break
+        
+        # Code execution function patterns (comprehensive)
+        exec_patterns = [
+            # PHP functions
+            "system(", "exec(", "shell_exec(", "passthru(", "popen(",
+            "proc_open(", "eval(", "base64_decode", "file_get_contents(",
+            "fopen(", "fwrite(", "unlink(", "chmod(", "chown(", "mkdir(",
+            "rmdir(", "symlink(", "readfile(", "include(", "require(",
+            "preg_replace(", "create_function(", "call_user_func(",
+            
+            # Python functions
+            "__import__(", "getattr(", "setattr(", "hasattr(", "delattr(",
+            "globals(", "locals(", "vars(", "dir(", "compile(", "execfile(",
+            "input(", "raw_input(", "open(", "file(", "__builtins__",
+            
+            # JavaScript functions
+            "function(", "new function", "constructor(", "apply(", "call(",
+            "bind(", "with(", "delete ", "void(", "typeof ",
+            
+            # System commands
+            "cmd.exe", "/bin/sh", "/bin/bash", "powershell.exe", "sh.exe",
+            "bash.exe", "python.exe", "perl.exe", "ruby.exe", "java.exe",
+            
+            # Network functions
+            "curl(", "wget(", "fetch(", "xmlhttprequest", "ajax(",
+            "socket(", "connect(", "bind(", "listen(", "accept("
+        ]
+        
+        for pattern in exec_patterns:
+            if pattern in text_lower:
+                issues.append(f"Potential code execution attempt detected: {pattern}")
+        
+        # Additional suspicious patterns
+        suspicious_patterns = [
+            "base64", "hex2bin", "bin2hex", "rot13", "str_rot13",
+            "gzinflate(", "gzuncompress(", "bzdecompress(",
+            "mcrypt_decrypt(", "openssl_decrypt(", "password_verify(",
+            "crypt(", "md5(", "sha1(", "hash(", "hash_hmac("
+        ]
+        
+        for pattern in suspicious_patterns:
+            if pattern in text_lower:
+                issues.append(f"Suspicious function detected: {pattern}")
+        
+        return issues
+
     def analyze_text(self, text: str) -> Dict[str, Any]:
-        """Analyzes text using Python-based keyword and LLM checks."""
+        """Analyzes text using Python-based keyword, code injection, and LLM checks."""
         issues: List[str] = []
+        
+        # Check for code injection patterns first
+        injection_issues = self.detect_code_injection(text)
+        if injection_issues:
+            issues.extend(injection_issues)
         
         # Rule-based keyword checks with word boundaries to avoid false positives
         text_lower = text.lower()
@@ -115,7 +277,7 @@ class SecurityAnalyzer:
             'is_safe': is_safe,
             'confidence_score': llm_score if is_safe else 0.0,
             'detected_issues': issues,
-            'analysis_summary': 'Python-based text analysis (Keywords + LLM)'
+            'analysis_summary': 'Python-based text analysis (Code Injection + Keywords + LLM)'
         }
 
     def analyze_file(self, file_path: Union[str, os.PathLike]) -> Dict[str, Any]:

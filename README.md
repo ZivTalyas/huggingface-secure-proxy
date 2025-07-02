@@ -7,7 +7,7 @@ A secure input validation proxy designed to protect NLP/ML models and applicatio
 ---
 ## 🎬 Demo
 
-*[GIF placeholder - user will add demo GIF here]*
+![Demo](demo/demo.gif)
 
 ### Key Features Demonstrated:
 - **Real-time Text Validation**: Instant feedback on text input safety

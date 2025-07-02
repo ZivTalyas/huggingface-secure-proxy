@@ -29,25 +29,9 @@ jobs:
             echo "Frontend did not become ready"; docker logs $(docker ps -q); exit 1;
           fi
 
-      - name: Run test suite with allowed failures
+      - name: Run test suite
         run: |
-          set +e
-          output=$(python -m unittest tests/test_api.py -v 2>&1)
-          status=$?
-          echo "$output"
-          if [ $status -ne 0 ]; then
-            # extract failing test method names
-            fails=$(echo "$output" | grep -oP '^FAIL: \w+' | awk '{print $2}')
-            allowed="test_harmful_keyword test_validate_unsafe_text test_validate_file_upload_pdf test_validate_file_upload_txt"
-            for f in $fails; do
-              if [[ ! " $allowed " =~ " $f " ]]; then
-                echo "❌ Non-allowed test failed: $f"; exit 1
-              else
-                echo "⚠️ Allowed failure: $f (ignored)"
-              fi
-            done
-          fi
-          echo "✅ Test phase completed (allowed failures ignored)"
+          python -m unittest tests/test_api.py -v
 
       - name: Shutdown stack
         if: always()

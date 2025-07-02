@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <iostream>
+#include <algorithm>
 
 // Regular expressions for PII detection
 const boost::regex email_pattern(R"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})");
@@ -66,58 +67,176 @@ AnalysisResult SecurityAnalyzer::analyzeText(const std::string& text) {
 std::vector<std::string> SecurityAnalyzer::detectMaliciousContent(const std::string& text) {
     std::vector<std::string> issues;
     
-    // Check for SQL injection patterns
-    if (text.find("' OR '") != std::string::npos ||
-        text.find("' OR 1=1") != std::string::npos ||
-        text.find("' OR 1=1--") != std::string::npos) {
-        issues.push_back("Potential SQL injection attempt detected");
-    }
+    // Convert to lowercase for case-insensitive matching
+    std::string text_lower = text;
+    std::transform(text_lower.begin(), text_lower.end(), text_lower.begin(), ::tolower);
     
-    // Check for XSS patterns
-    if (text.find("<script>") != std::string::npos ||
-        text.find("javascript:") != std::string::npos ||
-        text.find("onload=") != std::string::npos) {
-        issues.push_back("Potential XSS attack detected");
-    }
-    
-    // Check for command injection patterns
-    if (text.find("; rm -rf") != std::string::npos ||
-        text.find("; del ") != std::string::npos ||
-        text.find("& echo") != std::string::npos) {
-        issues.push_back("Potential command injection attempt detected");
-    }
-    
-    // Check for common malware signatures
-    std::vector<std::string> malware_patterns = {
-        "base64_decode",
-        "eval(base64",
-        "system(",
-        "exec(",
-        "shell_exec(",
-        "passthru(",
-        "popen(",
-        "proc_open(",
-        "curl_exec(",
-        "file_get_contents(",
-        "fopen(",
-        "fwrite(",
-        "unlink(",
-        "chmod(",
-        "chown(",
-        "chgrp(",
-        "rename(",
-        "move_uploaded_file(",
-        "copy(",
-        "mkdir(",
-        "rmdir(",
-        "unlink(",
-        "symlink(",
-        "link("
+    // SQL Injection patterns (comprehensive)
+    std::vector<std::string> sql_patterns = {
+        "' or '", "' or 1=1", "' or 1=1--", "' or '1'='1", "' or \"1\"=\"1",
+        "' union select", "union all select", "' having '", "' group by '",
+        "' order by ", "' drop table", "' delete from", "' insert into",
+        "' update ", "' alter table", "' create table", "' truncate ",
+        "'; exec", "'; execute", "xp_cmdshell", "sp_executesql",
+        "benchmark(", "sleep(", "waitfor delay", "pg_sleep(",
+        "extractvalue(", "updatexml(", "load_file(", "into outfile",
+        "information_schema", "mysql.user", "sysobjects", "syscolumns"
     };
     
-    for (const auto& pattern : malware_patterns) {
+    for (const auto& pattern : sql_patterns) {
+        if (text_lower.find(pattern) != std::string::npos) {
+            issues.push_back("Potential SQL injection attempt detected");
+            break;
+        }
+    }
+    
+    // XSS/JavaScript injection patterns (comprehensive)
+    std::vector<std::string> xss_patterns = {
+        "<script", "</script>", "javascript:", "vbscript:", "onload=", "onerror=",
+        "onclick=", "onmouseover=", "onfocus=", "onblur=", "onchange=",
+        "onsubmit=", "onreset=", "onkeydown=", "onkeyup=", "onkeypress=",
+        "document.cookie", "document.write", "window.location", "eval(",
+        "settimeout(", "setinterval(", "innerhtml=", "outerhtml=",
+        "document.getelementbyid", "alert(", "confirm(", "prompt(",
+        "fromcharcode(", "unescape(", "string.fromcharcode"
+    };
+    
+    for (const auto& pattern : xss_patterns) {
+        if (text_lower.find(pattern) != std::string::npos) {
+            issues.push_back("Potential XSS attack detected");
+            break;
+        }
+    }
+    
+    // Command injection patterns (comprehensive)
+    std::vector<std::string> cmd_patterns = {
+        "; rm -rf", "; del ", "& echo", "| nc ", "| netcat", "; wget",
+        "; curl", "; cat /etc/passwd", "; cat /etc/shadow", "$(", "`",
+        "; ls -la", "; dir", "; whoami", "; id", "; uname", "; ps aux",
+        "; netstat", "; ifconfig", "; ping", "; nslookup", "; dig",
+        "; chmod +x", "; ./", "&&", "||", "; sh", "; bash", "; cmd",
+        "; powershell", "& type", "& copy", "& move", "& ren"
+    };
+    
+    for (const auto& pattern : cmd_patterns) {
+        if (text_lower.find(pattern) != std::string::npos) {
+            issues.push_back("Potential command injection attempt detected");
+            break;
+        }
+    }
+    
+    // NoSQL injection patterns
+    std::vector<std::string> nosql_patterns = {
+        "$where", "$ne", "$in", "$nin", "$regex", "$exists", "$elemMatch",
+        "$gt", "$gte", "$lt", "$lte", "$or", "$and", "$not", "$nor",
+        "this.password", "this.username", "db.eval", "mapreduce"
+    };
+    
+    for (const auto& pattern : nosql_patterns) {
+        if (text_lower.find(pattern) != std::string::npos) {
+            issues.push_back("Potential NoSQL injection attempt detected");
+            break;
+        }
+    }
+    
+    // LDAP injection patterns
+    std::vector<std::string> ldap_patterns = {
+        ")(cn=*", ")(uid=*", ")(mail=*", ")(&", ")(|", "*)(uid=*",
+        "*)(cn=*", "admin*", "*admin", ")(objectclass=*"
+    };
+    
+    for (const auto& pattern : ldap_patterns) {
+        if (text_lower.find(pattern) != std::string::npos) {
+            issues.push_back("Potential LDAP injection attempt detected");
+            break;
+        }
+    }
+    
+    // Path traversal patterns
+    std::vector<std::string> path_patterns = {
+        "../", "..\\", "%2e%2e%2f", "%2e%2e%5c", "....//", "....\\\\",
+        "/etc/passwd", "/etc/shadow", "/etc/hosts", "c:\\windows\\system32",
+        "boot.ini", "web.config", ".env", ".htaccess", "/proc/self/environ"
+    };
+    
+    for (const auto& pattern : path_patterns) {
+        if (text_lower.find(pattern) != std::string::npos) {
+            issues.push_back("Potential path traversal attempt detected");
+            break;
+        }
+    }
+    
+    // XML/XXE injection patterns
+    std::vector<std::string> xml_patterns = {
+        "<!entity", "<!doctype", "system \"file://", "system \"http://",
+        "system \"ftp://", "%xxe;", "&xxe;", "xml version=", "<?xml"
+    };
+    
+    for (const auto& pattern : xml_patterns) {
+        if (text_lower.find(pattern) != std::string::npos) {
+            issues.push_back("Potential XML/XXE injection attempt detected");
+            break;
+        }
+    }
+    
+    // Template injection patterns
+    std::vector<std::string> template_patterns = {
+        "{{", "}}", "${", "#{", "<%", "%>", "@{", "[[", "]]",
+        "__import__", "getattr(", "setattr(", "__builtins__",
+        "exec(", "eval(", "compile(", "__globals__"
+    };
+    
+    for (const auto& pattern : template_patterns) {
         if (text.find(pattern) != std::string::npos) {
-            issues.push_back("Potential malware signature detected: " + pattern);
+            issues.push_back("Potential template injection attempt detected");
+            break;
+        }
+    }
+    
+    // Code execution function patterns (comprehensive)
+    std::vector<std::string> exec_patterns = {
+        // PHP functions
+        "system(", "exec(", "shell_exec(", "passthru(", "popen(",
+        "proc_open(", "eval(", "base64_decode", "file_get_contents(",
+        "fopen(", "fwrite(", "unlink(", "chmod(", "chown(", "mkdir(",
+        "rmdir(", "symlink(", "readfile(", "include(", "require(",
+        "preg_replace(", "create_function(", "call_user_func(",
+        
+        // Python functions
+        "__import__(", "getattr(", "setattr(", "hasattr(", "delattr(",
+        "globals(", "locals(", "vars(", "dir(", "compile(", "execfile(",
+        "input(", "raw_input(", "open(", "file(", "__builtins__",
+        
+        // JavaScript functions
+        "function(", "new function", "constructor(", "apply(", "call(",
+        "bind(", "with(", "delete ", "void(", "typeof ",
+        
+        // System commands
+        "cmd.exe", "/bin/sh", "/bin/bash", "powershell.exe", "sh.exe",
+        "bash.exe", "python.exe", "perl.exe", "ruby.exe", "java.exe",
+        
+        // Network functions
+        "curl(", "wget(", "fetch(", "xmlhttprequest", "ajax(",
+        "socket(", "connect(", "bind(", "listen(", "accept("
+    };
+    
+    for (const auto& pattern : exec_patterns) {
+        if (text_lower.find(pattern) != std::string::npos) {
+            issues.push_back("Potential code execution attempt detected: " + pattern);
+        }
+    }
+    
+    // Additional suspicious patterns
+    std::vector<std::string> suspicious_patterns = {
+        "base64", "hex2bin", "bin2hex", "rot13", "str_rot13",
+        "gzinflate(", "gzuncompress(", "bzdecompress(",
+        "mcrypt_decrypt(", "openssl_decrypt(", "password_verify(",
+        "crypt(", "md5(", "sha1(", "hash(", "hash_hmac("
+    };
+    
+    for (const auto& pattern : suspicious_patterns) {
+        if (text_lower.find(pattern) != std::string::npos) {
+            issues.push_back("Suspicious function detected: " + pattern);
         }
     }
     

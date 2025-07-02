@@ -84,7 +84,7 @@ class SecurityAnalyzer:
         sql_patterns = [
             "' or '", "' or 1=1", "' or 1=1--", "' or '1'='1", "' or \"1\"=\"1",
             "' union select", "union all select", "' having '", "' group by '",
-            "' order by ", "' drop table", "' delete from", "' insert into",
+            "' order by ", "' drop table", "'; drop table", "' delete from", "' insert into",
             "' update ", "' alter table", "' create table", "' truncate ",
             "'; exec", "'; execute", "xp_cmdshell", "sp_executesql",
             "benchmark(", "sleep(", "waitfor delay", "pg_sleep(",
@@ -132,7 +132,8 @@ class SecurityAnalyzer:
         nosql_patterns = [
             "$where", "$ne", "$in", "$nin", "$regex", "$exists", "$elemmatch",
             "$gt", "$gte", "$lt", "$lte", "$or", "$and", "$not", "$nor",
-            "this.password", "this.username", "db.eval", "mapreduce"
+            "this.password", "this.username", "db.eval", "mapreduce",
+            "return true", "return false", "; return ", "var x=", "var y="
         ]
         
         for pattern in nosql_patterns:

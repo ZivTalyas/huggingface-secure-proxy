@@ -75,7 +75,7 @@ std::vector<std::string> SecurityAnalyzer::detectMaliciousContent(const std::str
     std::vector<std::string> sql_patterns = {
         "' or '", "' or 1=1", "' or 1=1--", "' or '1'='1", "' or \"1\"=\"1",
         "' union select", "union all select", "' having '", "' group by '",
-        "' order by ", "' drop table", "' delete from", "' insert into",
+        "' order by ", "' drop table", "'; drop table", "' delete from", "' insert into",
         "' update ", "' alter table", "' create table", "' truncate ",
         "'; exec", "'; execute", "xp_cmdshell", "sp_executesql",
         "benchmark(", "sleep(", "waitfor delay", "pg_sleep(",
@@ -129,7 +129,8 @@ std::vector<std::string> SecurityAnalyzer::detectMaliciousContent(const std::str
     std::vector<std::string> nosql_patterns = {
         "$where", "$ne", "$in", "$nin", "$regex", "$exists", "$elemMatch",
         "$gt", "$gte", "$lt", "$lte", "$or", "$and", "$not", "$nor",
-        "this.password", "this.username", "db.eval", "mapreduce"
+        "this.password", "this.username", "db.eval", "mapreduce",
+        "return true", "return false", "; return ", "var x=", "var y="
     };
     
     for (const auto& pattern : nosql_patterns) {

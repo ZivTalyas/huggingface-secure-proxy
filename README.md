@@ -139,9 +139,9 @@ curl -X POST https://safe-input-proxy-frontend.onrender.com/validate-input \
    - Backend API: http://localhost:8001
    - Redis: localhost:6379
 
-### HTTPS Support (NEW! 🔒)
+### HTTPS Support
 
-The application now supports HTTPS for enhanced security:
+The application supports HTTPS for enhanced security:
 
 1. **Generate SSL certificates**:
    ```bash

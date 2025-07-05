@@ -23,6 +23,13 @@ cmake/
 .env
 .env.example
 
+# SSL Certificates (development only)
+docker/dev/certs/
+*.pem
+*.key
+*.crt
+*.cert
+
 # Files for testing
 sample_test_file.pdf
 sample_test_file.txt

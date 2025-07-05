@@ -403,9 +403,21 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 if __name__ == "__main__":
     import uvicorn
+    import ssl
+    
+    # SSL Configuration
+    ssl_context = None
+    if os.getenv("SSL_CERT_FILE") and os.getenv("SSL_KEY_FILE"):
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ssl_context.load_cert_chain(
+            os.getenv("SSL_CERT_FILE"),
+            os.getenv("SSL_KEY_FILE")
+        )
+    
     uvicorn.run(
         "app.backend.main:app",
         host=os.getenv("BACKEND_HOST", "0.0.0.0"),
         port=int(os.getenv("BACKEND_PORT", 8001)),
+        ssl_context=ssl_context,
         reload=True
     )

@@ -28,7 +28,8 @@ BACKEND_URL = os.getenv("BACKEND_URL")
 if not BACKEND_URL:
     BACKEND_HOST = os.getenv("BACKEND_HOST", "localhost")
     BACKEND_PORT = os.getenv("BACKEND_PORT", "8001")
-    BACKEND_URL = f"http://{BACKEND_HOST}:{BACKEND_PORT}"
+    BACKEND_PROTOCOL = os.getenv("BACKEND_PROTOCOL", "https")
+    BACKEND_URL = f"{BACKEND_PROTOCOL}://{BACKEND_HOST}:{BACKEND_PORT}"
 TIMEOUT = 30.0  # seconds
 
 # Determine static directory path relative to this file
@@ -159,9 +160,21 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 if __name__ == "__main__":
     import uvicorn
+    import ssl
+    
+    # SSL Configuration
+    ssl_context = None
+    if os.getenv("SSL_CERT_FILE") and os.getenv("SSL_KEY_FILE"):
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ssl_context.load_cert_chain(
+            os.getenv("SSL_CERT_FILE"),
+            os.getenv("SSL_KEY_FILE")
+        )
+    
     uvicorn.run(
         "app.frontend.main:app",
         host=os.getenv("FRONTEND_HOST", "0.0.0.0"),
         port=int(os.getenv("FRONTEND_PORT", 8000)),
+        ssl_context=ssl_context,
         reload=True
     )

@@ -34,6 +34,19 @@ FRONTEND_PORT=${FRONTEND_PORT:-8000}
 BACKEND_PORT=${BACKEND_PORT:-8001}
 REDIS_PORT=${REDIS_PORT:-6379}
 
+# Determine protocol based on SSL certificate availability
+if [ -f "docker/dev/certs/cert.pem" ] && [ -f "docker/dev/certs/key.pem" ]; then
+    PROTOCOL="https"
+    FRONTEND_HTTPS_PORT=${FRONTEND_HTTPS_PORT:-8443}
+    BACKEND_HTTPS_PORT=${BACKEND_HTTPS_PORT:-8444}
+    CURL_OPTS="-k" # Accept self-signed certificates
+    echo -e "${YELLOW}🔒 Using HTTPS (SSL certificates found)${NC}"
+else
+    PROTOCOL="http"
+    CURL_OPTS=""
+    echo -e "${YELLOW}🔓 Using HTTP (no SSL certificates found)${NC}"
+fi
+
 check_service() {
     local name=$1
     local url=$2
@@ -54,16 +67,28 @@ echo -e "${YELLOW}🔍 Running health checks...${NC}\n"
 
 # Check Docker services
 check_service "Docker" "docker ps" "docker ps > /dev/null"
-check_service "Docker Compose" "docker-compose -f docker/docker-compose.yml ps" "docker-compose -f docker/docker-compose.yml ps > /dev/null"
+check_service "Docker Compose" "docker-compose -f docker/dev/docker-compose.yml ps" "docker-compose -f docker/dev/docker-compose.yml ps > /dev/null"
 
 # Check Redis
-check_service "Redis" "redis-cli ping" "docker-compose -f docker/docker-compose.yml exec -T redis redis-cli ping | grep -q PONG"
+check_service "Redis" "redis-cli ping" "docker-compose -f docker/dev/docker-compose.yml exec -T redis redis-cli ping | grep -q PONG"
 
 # Check Backend API
-check_service "Backend API" "http://localhost:${BACKEND_PORT}/health" "curl -s -f http://localhost:${BACKEND_PORT}/health | grep -q 'ok'"
+if [ "$PROTOCOL" = "https" ]; then
+    check_service "Backend API (HTTPS)" "https://localhost:${BACKEND_HTTPS_PORT}/health" "curl -s -f ${CURL_OPTS} https://localhost:${BACKEND_HTTPS_PORT}/health | grep -q 'healthy'"
+    # Also check HTTP port if it's available
+    check_service "Backend API (HTTP)" "http://localhost:${BACKEND_PORT}/health" "curl -s -f http://localhost:${BACKEND_PORT}/health | grep -q 'healthy'"
+else
+    check_service "Backend API" "http://localhost:${BACKEND_PORT}/health" "curl -s -f http://localhost:${BACKEND_PORT}/health | grep -q 'healthy'"
+fi
 
 # Check Frontend API
-check_service "Frontend API" "http://localhost:${FRONTEND_PORT}/status" "curl -s -f http://localhost:${FRONTEND_PORT}/status | grep -q 'ok'"
+if [ "$PROTOCOL" = "https" ]; then
+    check_service "Frontend API (HTTPS)" "https://localhost:${FRONTEND_HTTPS_PORT}/status" "curl -s -f ${CURL_OPTS} https://localhost:${FRONTEND_HTTPS_PORT}/status | grep -q 'available'"
+    # Also check HTTP port if it's available
+    check_service "Frontend API (HTTP)" "http://localhost:${FRONTEND_PORT}/status" "curl -s -f http://localhost:${FRONTEND_PORT}/status | grep -q 'available'"
+else
+    check_service "Frontend API" "http://localhost:${FRONTEND_PORT}/status" "curl -s -f http://localhost:${FRONTEND_PORT}/status | grep -q 'available'"
+fi
 
 # Check Prometheus if enabled
 if [ "${PROMETHEUS_ENABLED:-false}" = "true" ]; then
@@ -72,9 +97,24 @@ if [ "${PROMETHEUS_ENABLED:-false}" = "true" ]; then
 fi
 
 echo -e "\n${YELLOW}📊 Service Status:${NC}"
-echo -e "Frontend API: http://localhost:${FRONTEND_PORT}/status"
-echo -e "Backend API:  http://localhost:${BACKEND_PORT}/health"
-echo -e "Redis:        localhost:${REDIS_PORT}"
+if [ "$PROTOCOL" = "https" ]; then
+    echo -e "Frontend API (HTTPS): https://localhost:${FRONTEND_HTTPS_PORT}/status"
+    echo -e "Frontend API (HTTP):  http://localhost:${FRONTEND_PORT}/status"
+    echo -e "Backend API (HTTPS):  https://localhost:${BACKEND_HTTPS_PORT}/health"
+    echo -e "Backend API (HTTP):   http://localhost:${BACKEND_PORT}/health"
+    echo -e "Redis:                localhost:${REDIS_PORT}"
+    echo -e ""
+    echo -e "${YELLOW}🔒 Access your application at:${NC}"
+    echo -e "  - https://localhost:${FRONTEND_HTTPS_PORT} (HTTPS - Recommended)"
+    echo -e "  - http://localhost:${FRONTEND_PORT} (HTTP - Fallback)"
+else
+    echo -e "Frontend API: http://localhost:${FRONTEND_PORT}/status"
+    echo -e "Backend API:  http://localhost:${BACKEND_PORT}/health"
+    echo -e "Redis:        localhost:${REDIS_PORT}"
+    echo -e ""
+    echo -e "${YELLOW}🔓 Access your application at:${NC}"
+    echo -e "  - http://localhost:${FRONTEND_PORT}"
+fi
 
 if [ "${PROMETHEUS_ENABLED:-false}" = "true" ]; then
     echo -e "Prometheus:   http://localhost:${PROMETHEUS_PORT}"

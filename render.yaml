@@ -12,6 +12,8 @@ services:
         value: "8000"
       - key: BACKEND_URL
         value: https://safe-input-proxy-backend.onrender.com
+      - key: BACKEND_PROTOCOL
+        value: https
       - key: SECURITY_LEVEL
         value: high
       - key: PYTHONUNBUFFERED

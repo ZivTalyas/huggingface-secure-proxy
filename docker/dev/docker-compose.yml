@@ -7,22 +7,27 @@ services:
       dockerfile: docker/dev/Dockerfile
     ports:
       - "8000:8000"
+      - "8443:8443"  # HTTPS port
     environment:
       - FRONTEND_HOST=0.0.0.0
       - FRONTEND_PORT=8000
-      - BACKEND_URL=http://backend:8001
+      - BACKEND_URL=https://backend:8444
       - BACKEND_HOST=backend
-      - BACKEND_PORT=8001
+      - BACKEND_PORT=8444
+      - BACKEND_PROTOCOL=https
       - SECURITY_LEVEL=high
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app:/app/tests
+      - SSL_CERT_FILE=/app/certs/cert.pem
+      - SSL_KEY_FILE=/app/certs/key.pem
     volumes:
       - ../../app:/app
       - ../../tests:/app/tests
+      - ./certs:/app/certs:ro
     depends_on:
       - backend
       - redis
-    command: uvicorn frontend.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn frontend.main:app --host 0.0.0.0 --port 8000 --ssl-keyfile /app/certs/key.pem --ssl-certfile /app/certs/cert.pem
 
   backend:
     build:
@@ -31,9 +36,10 @@ services:
     container_name: backend-1
     ports:
       - "8001:8001"
+      - "8444:8444"  # HTTPS port
     environment:
       - BACKEND_HOST=0.0.0.0
-      - BACKEND_PORT=8001
+      - BACKEND_PORT=8444
       - MODEL_NAME=distilbert-base-uncased
       - TOXIC_THRESHOLD=0.7
       - REDIS_HOST=redis
@@ -41,13 +47,16 @@ services:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app:/app/tests
+      - SSL_CERT_FILE=/app/certs/cert.pem
+      - SSL_KEY_FILE=/app/certs/key.pem
     volumes:
       - ../../app:/app
       - ../../tests:/app/tests
       - ../../cpp:/app/cpp
+      - ./certs:/app/certs:ro
     depends_on:
       - redis
-    command: uvicorn backend.main:app --host 0.0.0.0 --port 8001 --reload
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8444 --ssl-keyfile /app/certs/key.pem --ssl-certfile /app/certs/cert.pem
 
   redis:
     image: redis:7-alpine

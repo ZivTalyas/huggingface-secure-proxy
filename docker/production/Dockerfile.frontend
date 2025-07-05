@@ -1,7 +1,15 @@
 # Dockerfile for frontend (cloud build)
 FROM python:3.11-slim
 
+# Install OpenSSL for certificate handling
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
+
+# Create certs directory
+RUN mkdir -p /app/certs
 
 # Install dependencies
 COPY requirements.txt ./

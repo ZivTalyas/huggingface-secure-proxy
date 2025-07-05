@@ -139,6 +139,27 @@ curl -X POST https://safe-input-proxy-frontend.onrender.com/validate-input \
    - Backend API: http://localhost:8001
    - Redis: localhost:6379
 
+### HTTPS Support (NEW! 🔒)
+
+The application now supports HTTPS for enhanced security:
+
+1. **Generate SSL certificates**:
+   ```bash
+   python run.py generate-certs
+   ```
+
+2. **Start with HTTPS**:
+   ```bash
+   python run.py start --generate-certs
+   ```
+
+3. **Access via HTTPS**:
+   - Frontend: https://localhost:8443 (HTTPS)
+   - Backend API: https://localhost:8444 (HTTPS)
+   - HTTP fallback still available
+
+📖 **Full HTTPS Setup Guide**: See [HTTPS-SETUP.md](HTTPS-SETUP.md) for comprehensive configuration instructions.
+
 ---
 
 ## ⚡ Technical Choices & Architecture

@@ -212,6 +212,7 @@ async def startup_event():
         503: {"description": "Service is not ready or unhealthy"}
     }
 )
+
 async def health_check() -> Dict[str, Any]:
     """Health check endpoint for the backend service.
     
@@ -269,6 +270,7 @@ async def health_check() -> Dict[str, Any]:
         200: {"description": "Model information retrieved successfully"}
     }
 )
+
 async def get_model_info() -> Dict[str, Any]:
     """Get information about the models and services being used.
     
@@ -340,6 +342,7 @@ async def get_model_info() -> Dict[str, Any]:
         500: {"description": "Error retrieving cache statistics"}
     }
 )
+
 async def get_cache_stats() -> Dict[str, Any]:
     """Get detailed Redis cache statistics."""
     try:
@@ -356,10 +359,10 @@ async def get_cache_stats() -> Dict[str, Any]:
             "validation_stats": {
                 "text_validations": redis_service.get_counter("validations_text") or 0,
                 "file_validations": redis_service.get_counter("validations_file") or 0,
-                "safe_results": redis_service.get_counter("validations_text_safe") or 0 + 
-                             redis_service.get_counter("validations_file_safe") or 0,
-                "unsafe_results": redis_service.get_counter("validations_text_unsafe") or 0 + 
-                                redis_service.get_counter("validations_file_unsafe") or 0
+                "safe_results": (redis_service.get_counter("validations_text_safe") or 0) + 
+                             (redis_service.get_counter("validations_file_safe") or 0),
+                "unsafe_results": (redis_service.get_counter("validations_text_unsafe") or 0) + 
+                                (redis_service.get_counter("validations_file_unsafe") or 0)
             }
         }
         
@@ -389,6 +392,7 @@ async def get_cache_stats() -> Dict[str, Any]:
         500: {"description": "Error clearing cache"}
     }
 )
+
 async def clear_cache(pattern: Optional[str] = None) -> Dict[str, Any]:
     """Clear Redis cache entries."""
     try:
@@ -430,6 +434,7 @@ async def clear_cache(pattern: Optional[str] = None) -> Dict[str, Any]:
         500: {"description": "Internal server error during validation"}
     }
 )
+
 async def validate_input(request: ValidationRequest) -> Dict[str, Any]:
     """
     Validate input text or file for security issues.

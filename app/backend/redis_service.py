@@ -19,6 +19,7 @@ class RedisService:
         """Initialize Redis connection."""
         self.host = host or os.getenv("REDIS_HOST", "localhost")
         self.port = port or int(os.getenv("REDIS_PORT", "6379"))
+        self.password = os.getenv("REDIS_PASSWORD", None)
         self.db = db
         
         # Cache settings
@@ -37,6 +38,7 @@ class RedisService:
             self.redis_client = redis.Redis(
                 host=self.host,
                 port=self.port,
+                password=self.password,
                 db=self.db,
                 decode_responses=True,
                 socket_timeout=5,
@@ -50,7 +52,7 @@ class RedisService:
             logger.info(f"Successfully connected to Redis at {self.host}:{self.port}")
             
         except (ConnectionError, TimeoutError) as e:
-            logger.error(f"Failed to connect to Redis: {e}")
+            logger.warning(f"Redis not available: {e}. Caching will be disabled.")
             self.connected = False
             self.redis_client = None
     

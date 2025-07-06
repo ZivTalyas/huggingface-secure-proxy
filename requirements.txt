@@ -15,3 +15,6 @@ httpx==0.26.0
 # Other
 python-multipart==0.0.6  # optional, forms/file uploads
 
+# Redis
+redis==5.0.1
+

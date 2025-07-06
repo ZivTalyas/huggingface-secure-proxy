@@ -59,7 +59,12 @@ COPY --from=builder /src/run.py .
 # Set environment variables (can be overridden)
 ENV BACKEND_HOST=0.0.0.0 \
     BACKEND_PORT=10000 \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    REDIS_HOST=redis \
+    REDIS_PORT=6379 \
+    REDIS_DEFAULT_TTL=3600 \
+    REDIS_TEXT_CACHE_TTL=1800 \
+    REDIS_FILE_CACHE_TTL=7200
 
 # Expose both HTTP and HTTPS ports
 EXPOSE 10000

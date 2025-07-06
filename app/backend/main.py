@@ -7,7 +7,7 @@ using a combination of rule-based and ML-based security checks.
 import os
 import ctypes
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -20,6 +20,7 @@ from pathlib import Path
 # Add project root to Python path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 from security.service import SecurityService
+from backend.redis_service import redis_service
 
 # Initialize logging
 logging.basicConfig(
@@ -67,6 +68,11 @@ class ValidationResult(BaseModel):
     security_level: Optional[str] = None
     error: Optional[str] = None
     analysis_summary: Optional[str] = None
+    cache_hit: Optional[bool] = None
+    processing_time_ms: Optional[float] = None
+    detected_issues: Optional[List[str]] = None
+    cached_at: Optional[int] = None
+    analysis_type: Optional[str] = None
 
 def load_models():
     """Load ML models and C++ module"""
@@ -224,11 +230,23 @@ async def health_check() -> Dict[str, Any]:
         if not test_result or test_result.get("status") not in ["safe", "unsafe"]:
             raise RuntimeError("Security service validation check failed")
         
+        # Get Redis information
+        redis_info = redis_service.get_cache_info()
+        
         return {
             "status": "healthy",
             "service": "backend",
             "security_level": SECURITY_LEVEL,
-            "version": "1.0.0"
+            "version": "1.0.0",
+            "redis": {
+                "connected": redis_info.get("connected", False),
+                "cache_enabled": redis_info.get("connected", False),
+                "cache_stats": {
+                    "hits": redis_service.get_counter("cache_hits") or 0,
+                    "misses": redis_service.get_counter("cache_misses") or 0,
+                    "validation_keys": redis_info.get("validation_cache_keys", 0)
+                }
+            }
         }
         
     except Exception as e:
@@ -312,6 +330,90 @@ async def get_model_info() -> Dict[str, Any]:
             detail=f"Error retrieving model information: {str(e)}"
         )
 
+@app.get(
+    "/cache/stats",
+    summary="Cache Statistics",
+    description="Get detailed Redis cache statistics and information.",
+    response_model=Dict[str, Any],
+    responses={
+        200: {"description": "Cache statistics retrieved successfully"},
+        500: {"description": "Error retrieving cache statistics"}
+    }
+)
+async def get_cache_stats() -> Dict[str, Any]:
+    """Get detailed Redis cache statistics."""
+    try:
+        cache_info = redis_service.get_cache_info()
+        
+        # Get various counters
+        stats = {
+            "redis_info": cache_info,
+            "cache_performance": {
+                "total_hits": redis_service.get_counter("cache_hits") or 0,
+                "total_misses": redis_service.get_counter("cache_misses") or 0,
+                "hit_rate": 0.0
+            },
+            "validation_stats": {
+                "text_validations": redis_service.get_counter("validations_text") or 0,
+                "file_validations": redis_service.get_counter("validations_file") or 0,
+                "safe_results": redis_service.get_counter("validations_text_safe") or 0 + 
+                             redis_service.get_counter("validations_file_safe") or 0,
+                "unsafe_results": redis_service.get_counter("validations_text_unsafe") or 0 + 
+                                redis_service.get_counter("validations_file_unsafe") or 0
+            }
+        }
+        
+        # Calculate hit rate
+        total_requests = stats["cache_performance"]["total_hits"] + stats["cache_performance"]["total_misses"]
+        if total_requests > 0:
+            stats["cache_performance"]["hit_rate"] = (
+                stats["cache_performance"]["total_hits"] / total_requests * 100
+            )
+        
+        return stats
+        
+    except Exception as e:
+        logger.error(f"Error getting cache stats: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving cache statistics: {str(e)}"
+        )
+
+@app.post(
+    "/cache/clear",
+    summary="Clear Cache",
+    description="Clear Redis cache entries. Use with caution.",
+    response_model=Dict[str, Any],
+    responses={
+        200: {"description": "Cache cleared successfully"},
+        500: {"description": "Error clearing cache"}
+    }
+)
+async def clear_cache(pattern: Optional[str] = None) -> Dict[str, Any]:
+    """Clear Redis cache entries."""
+    try:
+        success = redis_service.clear_cache(pattern)
+        
+        if success:
+            return {
+                "status": "success",
+                "message": f"Cache cleared successfully" + (f" for pattern: {pattern}" if pattern else ""),
+                "pattern": pattern
+            }
+        else:
+            return {
+                "status": "error",
+                "message": "Failed to clear cache (Redis not connected)",
+                "pattern": pattern
+            }
+        
+    except Exception as e:
+        logger.error(f"Error clearing cache: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error clearing cache: {str(e)}"
+        )
+
 @app.post(
     "/validate",
     summary="Validate Input",
@@ -341,6 +443,9 @@ async def validate_input(request: ValidationRequest) -> Dict[str, Any]:
     Raises:
         HTTPException: If there's an error during validation or invalid input.
     """
+    import time
+    start_time = time.time()
+    
     try:
         # Use provided security level or fall back to the default
         security_level = request.security_level or SECURITY_LEVEL
@@ -359,19 +464,65 @@ async def validate_input(request: ValidationRequest) -> Dict[str, Any]:
                 detail="Provide either 'text' or 'file', not both"
             )
         
-        # Process text or file validation
+        # Determine content and analysis type
+        content = None
+        analysis_type = None
+        
         if request.text:
-            result = security_service.validate_text(request.text)
+            content = request.text
+            analysis_type = "text"
         elif request.file:
-            result = security_service.validate_file(request.file)
+            content = request.file
+            analysis_type = "file"
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Either 'text' or 'file' must be provided"
             )
         
+        # Try to get cached result first
+        cached_result = redis_service.get_cached_validation_result(
+            content, analysis_type, security_level
+        )
+        
+        if cached_result:
+            # Increment cache hit counter
+            redis_service.increment_counter("cache_hits")
+            logger.info(f"Cache hit for {analysis_type} validation")
+            
+            # Add processing time and cache info
+            cached_result["processing_time_ms"] = (time.time() - start_time) * 1000
+            cached_result["cache_hit"] = True
+            cached_result["security_level"] = security_level
+            
+            logger.info(f"Returning cached result: {cached_result}")
+            return cached_result
+        
+        # Cache miss - perform actual validation
+        redis_service.increment_counter("cache_misses")
+        logger.debug(f"Cache miss for {analysis_type} validation")
+        
+        # Process text or file validation
+        if analysis_type == "text":
+            result = security_service.validate_text(content)
+        else:  # file
+            result = security_service.validate_file(content)
+        
         # Add security level to response
         result["security_level"] = security_level
+        result["cache_hit"] = False
+        
+        # Cache the result for future use
+        redis_service.cache_validation_result(
+            content, analysis_type, security_level, result
+        )
+        
+        # Increment validation counters
+        redis_service.increment_counter(f"validations_{analysis_type}")
+        redis_service.increment_counter(f"validations_{analysis_type}_{result['status']}")
+        
+        # Add processing time to response
+        result["processing_time_ms"] = (time.time() - start_time) * 1000
         
         return result
         
@@ -383,10 +534,6 @@ async def validate_input(request: ValidationRequest) -> Dict[str, Any]:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An error occurred during validation: {str(e)}"
         )
-    
-    # Add processing time to response
-    result["processing_time_ms"] = (time.time() - start_time) * 1000
-    return result
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):

@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ../..
+      dockerfile: docker/production/Dockerfile.frontend
+    ports:
+      - "80:8000"
+    environment:
+      - FRONTEND_HOST=0.0.0.0
+      - FRONTEND_PORT=8000
+      - BACKEND_URL=http://backend:10000
+      - BACKEND_HOST=backend
+      - BACKEND_PORT=10000
+      - BACKEND_PROTOCOL=http
+      - SECURITY_LEVEL=high
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - backend
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: docker/production/Dockerfile.backend
+    ports:
+      - "10000:10000"
+    environment:
+      - BACKEND_HOST=0.0.0.0
+      - BACKEND_PORT=10000
+      - MODEL_NAME=distilbert-base-uncased
+      - TOXIC_THRESHOLD=0.7
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DEFAULT_TTL=3600
+      - REDIS_TEXT_CACHE_TTL=1800
+      - REDIS_FILE_CACHE_TTL=7200
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PYTHONUNBUFFERED=1
+      - SECURITY_LEVEL=high
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:10000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  # Optional: Redis monitoring
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    ports:
+      - "9121:9121"
+    environment:
+      - REDIS_ADDR=redis:6379
+    depends_on:
+      - redis
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    driver: bridge 
